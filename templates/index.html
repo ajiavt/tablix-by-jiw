@@ -1,0 +1,3570 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TABLIX - Data Explorer Untuk Pencarian Tabel & Keyword</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // Tampung data script names sebagai variabel JavaScript
+        var scriptNames = {{ script_names|tojson|safe }};
+    </script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: white !important;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: bold;
+            border-radius: 15px 15px 0 0 !important;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #2980b9, #1f6aa6);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        .query-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            font-family: monospace;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #495057;
+            z-index: 10;
+        }
+        .copy-btn:hover {
+            background-color: #e9ecef;
+            color: #000;
+        }
+        .copy-success {
+            background-color: #d4edda !important;
+            border-color: #c3e6cb !important;
+            color: #155724 !important;
+        }
+        .progress-container {
+            margin: 20px 0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .progress {
+            height: 25px;
+            background-color: #e9ecef;
+            margin-bottom: 5px;
+        }
+        .progress-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            transition: width 0.3s ease;
+        }
+        .progress-bar.bg-success {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+        }
+        .progress-status {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .progress-details {
+            margin-top: 3px;
+            font-size: 12px;
+            color: #6c757d;
+            height: 16px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .select2-container {
+            width: 100% !important;
+        }
+        /* Tambahan style untuk select2 */
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 38px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+        .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 0 8px;
+        }
+        .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+            background-color: #e9ecef;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            box-sizing: border-box;
+            display: inline-flex;
+            align-items: center;
+            margin: 3px;
+            padding: 0 8px;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle;
+            line-height: 24px;
+            font-size: 14px;
+        }
+        .select2-container--bootstrap-5 .select2-dropdown {
+            border-color: #dee2e6;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        .select2-container--bootstrap-5 .select2-dropdown .select2-results__option--highlighted[aria-selected] {
+            background-color: #fd267a;
+        }
+        #status-message {
+            display: none;
+            margin-top: 15px;
+        }
+        .file-info {
+            margin-top: 15px;
+            display: none;
+        }
+        .result-card {
+            margin-bottom: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .keyword-chip {
+            display: inline-block;
+            padding: 2px 8px;
+            margin-right: 5px;
+            background-color: #e9ecef;
+            border-radius: 16px;
+            font-size: 12px;
+            color: #495057;
+        }
+        .search-options-card {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #dee2e6;
+        }
+        .form-check-input:checked {
+            background-color: #fd267a;
+            border-color: #fd267a;
+        }
+        .partition-progress {
+            margin-bottom: 10px;
+        }
+        .cancel-search-btn {
+            margin-top: 10px;
+        }
+        .search-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .real-time-results {
+            margin-top: 10px;
+            font-weight: bold;
+            color: #fd267a;
+        }
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+            border-width: 0.2em;
+        }
+        /* Tambahan style untuk highlight */
+        .highlight-table {
+            background-color: #fffacd;
+            color: #000;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .highlight-keyword {
+            background-color: #e3f2fd;
+            color: #2980b9;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        /* Warna berbeda untuk setiap remote server */
+        .remote-server-color {
+            border-radius: 3px;
+            font-weight: bold;
+            padding: 2px 6px;
+            display: inline-block;
+        }
+        .remote-server-olibscif_ds {
+            background-color: #e8f4fd;
+            color: #2980b9;
+        }
+        .remote-server-olibsfe_ds {
+            background-color: #ebfae8;
+            color: #27ae60;
+        }
+        .remote-server-olibsext_ds {
+            background-color: #fff0e6;
+            color: #d35400;
+        }
+        .remote-server-olibshtx_ds {
+            background-color: #f4e8fd;
+            color: #8e44ad;
+        }
+        .remote-server-olibssbx_ds {
+            background-color: #fdeae8;
+            color: #c0392b;
+        }
+        .remote-server-olibssec_ds {
+            background-color: #f9f9e0;
+            color: #7f8c8d;
+        }
+        /* Badge untuk kombinasi SELECT+MANIPULASI */
+        .bg-purple {
+            background-color: #8e44ad;
+            color: white;
+        }
+        /* Badge untuk difficulty levels */
+        .badge-easy {
+            background-color: #2ecc71 !important;
+            color: white !important;
+        }
+        .badge-medium {
+            background-color: #f39c12 !important;
+            color: white !important;
+        }
+        .badge-hard {
+            background-color: #e74c3c !important;
+            color: white !important;
+        }
+        /* Sequential Index Badge */
+        .index-badge {
+            font-size: 0.75rem;
+            margin-right: 8px;
+            min-width: 24px;
+            text-align: center;
+        }
+        /* Back to top button animation */
+        #back-to-top {
+            transition: all 0.3s ease;
+            z-index: 1000;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            border: none;
+        }
+        #back-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        /* Tablix-style header with parallax */
+        .tablix-header {
+            position: relative;
+            overflow: hidden;
+            padding: 120px 0;
+            color: white;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            perspective: 1000px;
+        }
+        .parallax-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            z-index: -2;
+            transform-style: preserve-3d;
+        }
+        .parallax-dots {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.15) 2px, transparent 2px);
+            background-size: 30px 30px;
+            z-index: -1;
+            transform-style: preserve-3d;
+        }
+        .parallax-shapes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+        .parallax-shape {
+            position: absolute;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            transform-style: preserve-3d;
+            transform: translateZ(0);
+        }
+        .shape1 {
+            width: 150px;
+            height: 150px;
+            top: -20px;
+            left: 10%;
+            transform: translateZ(50px);
+        }
+        .shape2 {
+            width: 80px;
+            height: 80px;
+            bottom: 20px;
+            right: 15%;
+            transform: translateZ(80px);
+        }
+        .shape3 {
+            width: 100px;
+            height: 100px;
+            top: 30%;
+            right: 5%;
+            transform: translateZ(30px);
+        }
+        .shape4 {
+            width: 120px;
+            height: 120px;
+            bottom: -30px;
+            left: 30%;
+            transform: translateZ(60px);
+        }
+        .tablix-header-content {
+            position: relative;
+            z-index: 1;
+            transform-style: preserve-3d;
+            transform: translateZ(100px);
+        }
+        .tablix-logo {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            transform-style: preserve-3d;
+        }
+        .tablix-tagline {
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+            opacity: 0.95;
+        }
+        /* Tablix Heart Beat Animation */
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.2); }
+            50% { transform: scale(1); }
+            75% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .heartbeat {
+            animation: heartbeat 1.5s infinite;
+            display: inline-block;
+        }
+        /* Tablix-style footer */
+        .tablix-footer {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+        }
+        .tablix-footer a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .tablix-footer a:hover {
+            text-decoration: underline;
+        }
+        /* Floating elements */
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-15px) rotate(2deg); }
+            100% { transform: translateY(0) rotate(0deg); }
+        }
+        .float-element {
+            animation: float 6s ease-in-out infinite;
+        }
+        .float-element-2 {
+            animation: float 8s ease-in-out infinite 1s;
+        }
+        .float-element-3 {
+            animation: float 7s ease-in-out infinite 2s;
+        }
+        /* Bouncy animation for reset button */
+        @keyframes bouncy {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-20px);}
+            60% {transform: translateY(-10px);}
+        }
+        .bouncy {
+            animation: bouncy 2s infinite;
+        }
+        .reset-active {
+            background: linear-gradient(45deg, #3498db, #2980b9) !important;
+            border: none !important;
+            color: white !important;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important;
+        }
+        .reset-inactive {
+            background-color: #6c757d !important;
+            opacity: 0.5;
+        }
+        /* Loading animation */
+        .loading-container {
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 500px;
+            text-align: center;
+        }
+        .loading-container h4 {
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: 600;
+        }
+        .loading-container p {
+            color: #666;
+        }
+        .pikachu-animation {
+            margin-bottom: 20px;
+        }
+        .select-wrapper {
+            position: relative;
+        }
+        #clear-all-tables {
+            transition: all 0.2s ease;
+            opacity: 0.8;
+        }
+        #clear-all-tables:hover {
+            opacity: 1;
+            background-color: rgba(253, 38, 122, 0.1);
+        }
+        /* Warna-warna flat untuk background grup file */
+        .file-group-colors {
+            transition: background-color 0.3s;
+        }
+        /* Style untuk item yang sudah direplace (hijau) */
+        .replaced-item {
+            border-left: 5px solid #20a052 !important; /* Hijau yang lebih serasi dengan biru */
+            background-color: rgba(32, 160, 82, 0.08); /* Background hijau dengan opacity rendah */
+        }
+        .replaced-item .card-header {
+            background-color: rgba(32, 160, 82, 0.15) !important; /* Header hijau lebih gelap */
+        }
+        .replaced-item .checked-indicator {
+            background-color: #20a052 !important; /* Checkmark hijau */
+        }
+        /* Style untuk item yang auto-replaced (merah) */
+        .replaced-item-auto {
+            border-left: 5px solid #e74c3c !important; /* Merah yang serasi dengan biru */
+            background-color: rgba(231, 76, 60, 0.08) !important; /* Background merah dengan opacity rendah */
+        }
+        .replaced-item-auto .card-header {
+            background-color: rgba(231, 76, 60, 0.15) !important; /* Header merah lebih gelap */
+        }
+        .replaced-item-auto .checked-indicator {
+            background-color: #e74c3c !important; /* Checkmark merah */
+        }
+        .badge-replaced-auto {
+            background-color: #e74c3c !important; /* Badge merah */
+            color: white !important;
+        }
+        .copy-filename-btn {
+            opacity: 0.6;
+            transition: all 0.2s;
+        }
+        .copy-filename-btn:hover {
+            opacity: 1;
+            background-color: #f8f9fa;
+        }
+        /* Tambahan untuk checked item */
+        .result-item {
+            position: relative;
+        }
+        .checked-indicator {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 0 15px 0 15px;
+            background-color: #28a745;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            font-size: 14px;
+        }
+        
+        .select2-selection__rendered {
+            padding-left: 0 !important;
+            margin-left: -4px !important;
+        }
+        /* Tambahkan style untuk tanda check dan cross mark */
+        .table-check-mark {
+            color: #2ecc71;
+            margin-left: 0;
+            font-size: 12px;
+        }
+        .table-cross-mark {
+            color: #e74c3c;
+            margin-left: 0;
+            font-size: 12px;
+        }
+        
+        /* Style baru untuk container ikon check dan cross mark */
+        .icon-circle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+        
+        .check-circle {
+            background-color: rgba(46, 204, 113, 0.15);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+        }
+        
+        .cross-circle {
+            background-color: rgba(231, 76, 60, 0.15);
+            border: 1px solid rgba(231, 76, 60, 0.5);
+        }
+        /* Membuat badge baris lebih menonjol */
+        .line-badge {
+            background-color: #34495e !important;
+            color: white !important;
+            font-weight: bold !important;
+            padding: 5px 8px !important;
+            border-radius: 6px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+        }
+        /* Efek animasi glowing untuk tombol atur path */
+        .glow-anim {
+            box-shadow: 0 0 6px 2px #3498db;
+            animation: glow-pulse 1.2s infinite alternate;
+            z-index: 10;
+        }
+        @keyframes glow-pulse {
+            0% { box-shadow: 0 0 6px 2px #3498db }
+            100% { box-shadow: 0 0 12px 4px #2980b9 }
+        }
+        
+        /* Custom styling untuk form-switch */
+        .form-check-input:checked {
+            background-color: #3498db !important;
+            border-color: #2980b9 !important;
+        }
+        
+        .form-switch .form-check-input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .form-switch .form-check-input:not(:checked):not(:focus) {
+            background-color: #f8f9fa;
+            border-color: #dee2e6;
+        }
+    </style>
+</head>
+<body class="min-vh-100 d-flex flex-column">
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-table me-2"></i>TABLIX
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Beranda</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Branding baru dengan tema Tablix dan efek parallax -->
+    <div class="tablix-header">
+        <div class="parallax-bg"></div>
+        <div class="parallax-dots"></div>
+        <div class="parallax-shapes">
+            <div class="parallax-shape shape1 float-element"></div>
+            <div class="parallax-shape shape2 float-element-2"></div>
+            <div class="parallax-shaxpe shape3 float-element-3"></div>
+            <div class="parallax-shape shape4 float-element"></div>
+        </div>
+        <div class="container tablix-header-content">
+            <div class="tablix-logo float-element-2">
+                <i class="fas fa-table heartbeat"></i>
+            </div>
+            <h1 class="fw-bold mb-2 float-element">TABLIX</h1>
+            <p class="tablix-tagline mb-2 float-element-3">Table Explorer & Data Index</p>
+            <p class="mt-2 small">Tools untuk pencarian tabel di folder script lebih cepat + pencarian kata kunci!</p>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-folder me-2"></i>1. Tentukan Path Folder Script
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" id="toggle-source-form">
+                            <i class="fas fa-chevron-up" id="toggle-source-icon"></i>
+                        </button>
+                    </div>
+                    <div class="card-body" id="source-form-content">
+                        <form id="source-path-form">
+                            <div class="mb-3">
+                                <label for="source-path" class="form-label">Path Source</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="source-path" name="source_path" placeholder="Masukkan path ke folder source" value="/Users/tablix-by-jiw/source/">
+                                    <span class="input-group-text" id="file-count-badge">0 files</span>
+                                    <button type="button" id="set-source-path" class="btn btn-primary glow-anim">
+                                        <i class="fas fa-folder-open me-1"></i> Atur Path
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                        <div id="upload-status" class="alert" style="display: none;"></div>
+                        <form id="intellij-path-form" class="mt-3">
+                            <div class="mb-3">
+                                <label for="intellij-path" class="form-label">Path Pergi ke Code</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="intellij-path" name="intellij_path" placeholder="Masukkan path ke /script project Intellij" value="/Users/tablix-by-jiw/source/">
+                                    <button type="button" id="set-intellij-path" class="btn btn-primary glow-anim">
+                                        <i class="fas fa-folder-open me-1"></i> Atur Path
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-search me-2"></i>2. Pilih Tabel dan Kata Kunci
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" id="toggle-search-form">
+                            <i class="fas fa-chevron-up" id="toggle-icon"></i>
+                        </button>
+                    </div>
+                    <div class="card-body" id="search-form-content">
+                        <form id="search-form">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="table-name" class="form-label">Daftar Tabel</label>
+                                    <div class="select-wrapper position-relative">
+                                        <select class="form-select select2" id="table-name" name="table_name" multiple>
+                                            <option value="all">-- Pilih Semua Tabel --</option>
+                                            {% for table in table_info %}
+                                            <option value="{{ table.table_name }}" data-remote-server="{{ table.remote_server }}">{{ table.table_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" id="clear-all-tables" class="btn btn-sm position-absolute" style="right: 10px; top: 10px; z-index: 100; background: #f4e8fd; color: #fd267a; font-size: 12px; padding: 2px 8px; border: 1px solid #fd267a; border-radius: 12px;">
+                                            <i class="fas fa-times me-1"></i>Hapus Semua
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="keywords" class="form-label">Kata Kunci atau Keywords</label>
+                                    <select class="form-select select2" id="keywords" name="keywords" multiple>
+                                        {% for keyword in default_keywords %}
+                                        <option value="{{ keyword }}">{{ keyword }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div id="replace-info" class="alert alert-info mt-2" style="display: none;">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <small>Kata kunci 'jt' dan 'jdbctemplate' akan direplace dengan di Daftar Remote Server yang sesuai atau dari <strong>setting-remote-server.txt</strong></small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="search-options-card">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="skip-js" checked>
+                                            <label class="form-check-label" for="skip-js">Skip JS</label>
+                                        </div>
+                                        <div class="form-text">Dalam folder script selalu ada file JS, nyalakan untuk melakukan skip saat pencarian.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="overwrite-source" checked>
+                                            <label class="form-check-label" for="overwrite-source">Overwrite Source</label>
+                                        </div>
+                                        <div class="form-text">Jika dinyalakan, script langsung ditimpa di folder source. Jika dimatikan, hasil replace disimpan di folder source_replaced.</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                                <button type="submit" class="btn btn-primary" style="width: 116px;">
+                                    <i class="fas fa-fire me-1"></i> Cari
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="status-message" class="alert mt-3"></div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-heart me-2"></i>3. Filter Hasil Pencarian
+                        </div>
+                    </div>
+                    <div class="card-body" id="filter-form-content">
+                        <form id="filter-form" class="row g-2 align-items-end">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Mode Tabel:</label>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="tableMode" id="tableModeProxy" value="proxy" checked>
+                                    <label class="form-check-label" for="tableModeProxy">Tabel Proxy</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="tableMode" id="tableModeBE" value="be">
+                                    <label class="form-check-label" for="tableModeBE">Tabel BE</label>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Jenis Query</label>
+                                <select class="form-select" id="filter-query-type">
+                                    <option value="ALL">ALL</option>
+                                    <option value="select">SELECT</option>
+                                    <option value="manipulation">MANIPULASI</option>
+                                    <option value="select+manipulation">SELECT+MANIPULASI</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Status Replace</label>
+                                <select class="form-select" id="filter-replace-status">
+                                    <option value="ALL">ALL</option>
+                                    <option value="replaced">Sudah Direplace</option>
+                                    <option value="notreplaced">Belum Direplace</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Difficulty</label>
+                                <select class="form-select" id="filter-difficulty">
+                                    <option value="ALL">ALL</option>
+                                    <option value="easy">Easy</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="hard">Hard</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Remote Server</label>
+                                <select class="form-select" id="filter-remote-server">
+                                    <option value="ALL">ALL</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tabel</label>
+                                <select class="form-select" id="filter-table">
+                                    <option value="ALL">ALL</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 mt-4">
+                                <button type="button" class="btn btn-secondary" style="width: 100%;" id="reset-filter-btn"><i class="fas fa-undo"></i> Reset Filter</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="results-container" style="display: none;">
+            <div class="row mt-3">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-heart me-2"></i>4. Hasil Pencarian
+                                <span class="badge bg-primary ms-2" id="result-count">0</span>
+                                <span class="badge bg-info ms-2" id="filtered-count-badge" style="display:none;"></span>
+                            </div>
+                            <div>
+                                <button id="reset-search-btn" class="btn btn-sm reset-active bouncy me-2">
+                                    <i class="fas fa-redo me-1"></i>Cari Ulang
+                                </button>
+                                <button id="replace-all-btn" class="btn btn-sm btn-warning me-2" style="display: none;">
+                                    <i class="fas fa-sync-alt me-1"></i>Replace ALL
+                                </button>
+                                <button id="show-replacer-btn" class="btn btn-sm btn-secondary me-2">
+                                    <i class="fas fa-list-alt me-1"></i>Daftar Server
+                                </button>
+                                <button id="show-script-names-btn" class="btn btn-sm btn-secondary me-2">
+                                    <i class="fas fa-file-code me-1"></i>Daftar Script
+                                </button>
+                                <button id="download-excel-btn" class="btn btn-success btn-sm">
+                                    <i class="fas fa-file-excel me-1"></i>Export to Excel
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="results-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner with Animation -->
+        <div class="loading-container" id="search-loading" style="display: none;">
+            <div class="text-center">
+                <div class="pikachu-animation">
+                    <img src="https://i.gifer.com/XOsX.gif" alt="Memuat..." style="width: 200px; margin-bottom: 15px;">
+                </div>
+                <h4>Mencari data...</h4>
+                <p>Mohon tunggu sebentar, sedang mengumpulkan hasil pencarian dari semua tabel</p>
+                <div class="progress mt-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="search-progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <p class="mt-2" style="font-size: 12px;" id="search-progress-log">Memulai pencarian...</p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="tablix-footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <p class="mb-1">Dibuat oleh Aji RW dan sonnet 3.7</p>
+                    <p class="small mb-0">Disclaimer: Web ini adalah tool yang dibuat untuk memudahkan pencarian data di folder script. Tidak dijadikan aplikasi utama, perannya adalah pendukung, dan cocok digunakan secara hybrid (tools + manual check).</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Tombol Back to Top -->
+    <button id="back-to-top" class="btn btn-lg" style="position: fixed; bottom: 20px; right: 20px; display: none; border-radius: 50%; width: 50px; height: 50px;">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Replacer Card Modal -->
+    <div class="modal fade" id="replacerModal" tabindex="-1" aria-labelledby="replacerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="replacerModalLabel">Informasi Remote Server</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card">
+                        <div class="card-body">
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Remote Server Name</th>
+                                        <th>Akan direplace menjadi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="replacer-table-body">
+                                    <!-- Content will be filled dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notificationModalLabel">Notifikasi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="notification-icon" class="text-center mb-3">
+                        <!-- Icon will be inserted here -->
+                    </div>
+                    <div id="notification-message" class="text-center">
+                        <!-- Message will be inserted here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Names Modal -->
+    <div class="modal fade" id="scriptNamesModal" tabindex="-1" aria-labelledby="scriptNamesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="scriptNamesModalLabel">Daftar Nama Script</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="script-search" placeholder="Cari script...">
+                                <button class="btn btn-outline-secondary" type="button" id="clear-search">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <table class="table table-striped table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th width="40%">Kode Script</th>
+                                        <th width="60%">Nama Script</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="script-names-table-body">
+                                    <!-- Content will be filled dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Inisialisasi Select2
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: 'resolve',
+                tags: true,
+                dropdownParent: $('#search-form-content')
+            });
+            
+            // Event listener untuk keywords, tampilkan info replace jika jt atau jdbctemplate dipilih
+            $('#keywords').on('change', function() {
+                const selectedKeywords = $(this).val() || [];
+                const showReplaceInfo = selectedKeywords.some(keyword => 
+                    keyword.toLowerCase() === 'jt' || 
+                    keyword.toLowerCase() === 'jdbctemplate' || 
+                    keyword.toLowerCase() === 'getjdbctemplate' || 
+                    keyword.toLowerCase() === 'getjdbctemplate()'
+                );
+                
+                if (showReplaceInfo) {
+                    $('#replace-info').slideDown();
+                } else {
+                    $('#replace-info').slideUp();
+                }
+                
+                // Sembunyikan tombol Replace All jika tidak ada keyword yang sesuai
+                if (showReplaceInfo) {
+                    $('#replace-all-btn').show();
+                } else {
+                    $('#replace-all-btn').hide();
+                }
+            });
+
+            // Handling Select All di dropdown table
+            $('#table-name').on('select2:select', function(e) {
+                var data = e.params.data;
+                
+                // Jika user memilih "Select All"
+                if (data.id === 'all') {
+                    // Unselect semua opsi yang dipilih sebelumnya
+                    $(this).val(null).trigger('change');
+                    
+                    // Pilih semua opsi kecuali "Select All"
+                    var allOptions = [];
+                    $('#table-name option').each(function() {
+                        if ($(this).val() !== 'all') {
+                            allOptions.push($(this).val());
+                        }
+                    });
+                    
+                    // Set nilai select ke semua opsi
+                    $(this).val(allOptions).trigger('change');
+                }
+            });
+
+            // Clear All tables button
+            $('#clear-all-tables').click(function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $('#table-name').val(null).trigger('change');
+            });
+
+            // Efek Parallax saat scroll
+            $(window).scroll(function() {
+                var scrollPosition = $(window).scrollTop();
+                
+                // Parallax efek untuk background dots dengan efek lebih dalam
+                $('.parallax-dots').css({
+                    'transform': 'translateY(' + scrollPosition * 0.5 + 'px) translateZ(-100px)'
+                });
+                
+                // Parallax efek untuk shapes dengan efek lebih dalam dan cepat
+                $('.shape1').css({
+                    'transform': 'translate(' + scrollPosition * 0.3 + 'px, ' + scrollPosition * -0.3 + 'px) rotate(' + scrollPosition * 0.05 + 'deg) translateZ(50px)'
+                });
+                
+                $('.shape2').css({
+                    'transform': 'translate(' + scrollPosition * -0.4 + 'px, ' + scrollPosition * 0.2 + 'px) rotate(' + scrollPosition * -0.07 + 'deg) translateZ(80px)'
+                });
+                
+                $('.shape3').css({
+                    'transform': 'translate(' + scrollPosition * 0.25 + 'px, ' + scrollPosition * 0.3 + 'px) rotate(' + scrollPosition * 0.06 + 'deg) translateZ(30px)'
+                });
+                
+                $('.shape4').css({
+                    'transform': 'translate(' + scrollPosition * -0.35 + 'px, ' + scrollPosition * -0.2 + 'px) rotate(' + scrollPosition * -0.04 + 'deg) translateZ(60px)'
+                });
+                
+                // Parallax efek untuk logo dan teks dengan efek lebih dalam
+                $('.tablix-header-content').css({
+                    'transform': 'translateY(' + scrollPosition * -0.15 + 'px) translateZ(100px)'
+                });
+            });
+
+            // Toggle form pencarian
+            $('#toggle-search-form').click(function() {
+                $('#search-form-content').slideToggle(300, function() {
+                    // Update icon setelah animasi selesai
+                    if ($(this).is(':visible')) {
+                        $('#toggle-icon').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                    } else {
+                        $('#toggle-icon').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                    }
+                });
+            });
+            
+            // Toggle form source
+            $('#toggle-source-form').click(function() {
+                $('#source-form-content').slideToggle(300, function() {
+                    // Update icon setelah animasi selesai
+                    if ($(this).is(':visible')) {
+                        $('#toggle-source-icon').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                    } else {
+                        $('#toggle-source-icon').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                    }
+                });
+            });
+
+            // Back to top button
+            $(window).scroll(function() {
+                if ($(this).scrollTop() > 300) {
+                    $('#back-to-top').fadeIn();
+                } else {
+                    $('#back-to-top').fadeOut();
+                }
+            });
+            
+            $('#back-to-top').click(function() {
+                $('html, body').animate({scrollTop: 0}, 800);
+                return false;
+            });
+
+            // Fungsi untuk mengaktifkan tombol reset
+            function activateResetButton() {
+                var resetBtn = $('#reset-search-btn');
+                resetBtn.prop('disabled', false);
+            }
+
+            // Periksa jumlah file di folder source
+            checkSourceFiles();
+            
+            // Variable to store polling intervals
+            var progressInterval = null;
+            var resultsPollingInterval = null;
+            var searchActive = false;
+            
+            // Variabel untuk melacak jumlah cek yang sudah dilakukan
+            var resultCheckCount = 0;
+            var MAX_CHECK_COUNT = 100; // Batas maksimum cek (100 detik dengan interval 1 detik)
+            
+            // Function to stop polling
+            function stopPolling() {
+                if (progressInterval) {
+                    clearInterval(progressInterval);
+                    progressInterval = null;
+                }
+                if (resultsPollingInterval) {
+                    clearInterval(resultsPollingInterval);
+                    resultsPollingInterval = null;
+                }
+            }
+
+            // --- INISIALISASI STATE ---
+            let sourcePathSet = false;
+            let intellijPathSet = false;
+
+            // Tambahkan efek glow ke tombol atur path di awal
+            $('#set-source-path').addClass('glow-anim');
+            $('#set-intellij-path').addClass('glow-anim');
+
+            // Fungsi untuk update enable/disable semua fitur
+            function updateFeatureAccess() {
+                if (sourcePathSet && intellijPathSet) {
+                    // Enable semua fitur
+                    $('#search-form :input').prop('disabled', false);
+                    $('#filter-form :input').prop('disabled', false);
+                    $('#reset-search-btn').prop('disabled', false);
+                    $('#replace-all-btn').prop('disabled', false);
+                    $('#show-replacer-btn').prop('disabled', false);
+                    $('#show-script-names-btn').prop('disabled', false);
+                    $('#download-excel-btn').prop('disabled', false);
+                } else {
+                    // Disable semua fitur kecuali tombol atur path
+                    $('#search-form :input').not('#set-source-path, #set-intellij-path, #source-path, #intellij-path').prop('disabled', true);
+                    $('#filter-form :input').prop('disabled', true);
+                    $('#reset-search-btn').prop('disabled', true);
+                    $('#replace-all-btn').prop('disabled', true);
+                    $('#show-replacer-btn').prop('disabled', true);
+                    $('#show-script-names-btn').prop('disabled', true);
+                    $('#download-excel-btn').prop('disabled', true);
+                }
+            }
+
+            // Inisialisasi: disable semua fitur selain atur path
+            updateFeatureAccess();
+
+            // Handler tombol set source path
+            $('#set-source-path').off('click').on('click', function() {
+                var sourcePath = $('#source-path').val().trim();
+                var btn = $(this);
+                if (!sourcePath) {
+                    showStatusMessage('error', 'Path folder tidak boleh kosong');
+                    return;
+                }
+                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
+                $.ajax({
+                    url: '/set_source_path',
+                    type: 'POST',
+                    data: { source_path: sourcePath },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            btn.removeClass('btn-primary').addClass('btn-success').html('<i class="fas fa-check me-1"></i>Berhasil!');
+                            $('#file-count-badge').text(response.file_count + ' files');
+                            $('#upload-status').hide();
+                            sourcePathSet = true;
+                            btn.removeClass('glow-anim');
+                            updateFeatureAccess();
+                        } else {
+                            btn.removeClass('btn-primary').addClass('btn-danger').html('<i class="fas fa-times me-1"></i>Gagal');
+                            showStatusMessage('error', response.message);
+                        }
+                    },
+                    error: function() {
+                        btn.removeClass('btn-primary').addClass('btn-danger').html('<i class="fas fa-times me-1"></i>Error');
+                        showStatusMessage('error', 'Terjadi kesalahan saat set path folder');
+                    },
+                    complete: function() {
+                        setTimeout(function() {
+                            btn.prop('disabled', false).removeClass('btn-success btn-danger').addClass('btn-primary').html('<i class="fas fa-folder-open me-1"></i> Atur Path');
+                        }, 2000);
+                    }
+                });
+            });
+
+            // Handler tombol set intellij path
+            $('#set-intellij-path').off('click').on('click', function() {
+                var path = $('#intellij-path').val();
+                var btn = $(this);
+                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
+                $.ajax({
+                    url: '/set_intellij_path',
+                    type: 'POST',
+                    data: { intellij_path: path },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            btn.removeClass('btn-primary').addClass('btn-success').html('<i class="fas fa-check me-1"></i>Berhasil!');
+                            intellijPathSet = true;
+                            btn.removeClass('glow-anim');
+                            updateFeatureAccess();
+                        } else {
+                            btn.removeClass('btn-primary').addClass('btn-danger').html('<i class="fas fa-times me-1"></i>Gagal');
+                            alert(response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        btn.removeClass('btn-primary').addClass('btn-danger').html('<i class="fas fa-times me-1"></i>Error');
+                        alert('Terjadi error saat menyimpan path Intellij!');
+                    },
+                    complete: function() {
+                        setTimeout(function() {
+                            btn.prop('disabled', false).removeClass('btn-success btn-danger').addClass('btn-primary').html('<i class="fas fa-folder-open me-1"></i> Atur Path');
+                        }, 2000);
+                    }
+                });
+            });
+
+            // Pencegahan submit form
+            $('#source-path-form').submit(function(e) {
+                e.preventDefault();
+                $('#set-source-path').click();
+            });
+
+            // Pencegahan submit form intellij agar tidak trigger ulang semua event
+            $('#intellij-path-form').submit(function(e) {
+                e.preventDefault();
+                $('#set-intellij-path').click();
+            });
+
+            // Tombol reset search
+            $('#reset-search-btn').click(function() {
+                // Reset UI ke keadaan awal
+                $('#results-container').hide();
+                $('#status-message').hide();
+                $('#table-name').val('').trigger('change');
+                $('#keywords').val('').trigger('change');
+                
+                // Sembunyikan filter
+                $('#filter-form-content').parent().hide();
+                
+                // Aktifkan kembali form pencarian
+                enableSearchForm();
+                
+                // Reset hasil pencarian di server
+                $.post('/reset_search', function(response) {
+                    // Reset global search state
+                    searchActive = false;
+                    
+                    // Hentikan polling
+                    stopPolling();
+                    
+                    // Bersihkan hasil
+                    $('#results-list').empty();
+                    $('#result-count').text('0 hasil');
+                    
+                    // Nonaktifkan tombol reset
+                    activateResetButton();
+                    
+                    console.log("Pencarian berhasil direset");
+                }).fail(function() {
+                    console.error("Gagal mereset pencarian");
+                });
+            });
+
+            // Form pencarian
+            $('#search-form').submit(function(e) {
+                e.preventDefault();
+                
+                // Batalkan pencarian yang sedang berjalan jika ada
+                if (searchActive) {
+                    $.post('/cancel_search', function() {
+                        searchActive = false;
+                    });
+                }
+                
+                // Reset hasil sebelumnya
+                $('#results-list').empty();
+                $('#result-count').text('0 hasil');
+                
+                var tableNames = $('#table-name').val();
+                var remoteServers = [];
+                
+                // Dapatkan remote server untuk setiap tabel yang dipilih
+                for (var i = 0; i < tableNames.length; i++) {
+                    var tableName = tableNames[i];
+                    if (tableName === 'all') {
+                        continue; // Skip untuk opsi "Select All"
+                    }
+                    var option = $('#table-name option[value="' + tableName + '"]');
+                    var remoteServer = option.data('remote-server') || '';
+                    remoteServers.push(remoteServer);
+                }
+                
+                var keywords = $('#keywords').val();
+                var skipJs = $('#skip-js').is(':checked');
+                var overwriteSource = $('#overwrite-source').is(':checked');
+                
+                if (!tableNames || tableNames.length === 0) {
+                    showStatusMessage('error', 'Pilih minimal satu nama tabel terlebih dahulu');
+                    return;
+                }
+                
+                var formData = new FormData();
+                
+                // Tambahkan semua tabel yang dipilih
+                if (tableNames && tableNames.length > 0) {
+                    tableNames.forEach(function(tableName) {
+                        // Jangan mengirim opsi "Select All" ke server
+                        if (tableName !== 'all') {
+                            formData.append('table_name', tableName);
+                        } else {
+                            // Jika ini adalah "Select All", kirim nilai 'all' khusus
+                            formData.append('table_name', 'all');
+                            // Hanya kirim satu 'all', keluar dari loop
+                            return;
+                        }
+                    });
+                }
+                
+                // Tambahkan remote server untuk setiap tabel
+                remoteServers.forEach(function(remoteServer) {
+                    formData.append('remote_server', remoteServer);
+                });
+                
+                formData.append('skip_js', skipJs);
+                formData.append('overwrite_source', overwriteSource);
+                formData.append('max_workers', 4); // Nilai default
+                formData.append('num_partitions', 1); // Nilai default
+                
+                if (keywords && keywords.length > 0) {
+                    keywords.forEach(function(keyword) {
+                        formData.append('keywords', keyword);
+                    });
+                }
+                
+                // Reset UI
+                $('#results-container').hide();
+                $('#status-message').hide();
+                
+                // Tampilkan loading animasi
+                $('#search-loading').show();
+                
+                // Scroll ke bawah halaman untuk menampilkan hasil pencarian
+                $('html, body').animate({
+                    scrollTop: $('#search-loading').offset().top - 20
+                }, 500);
+                
+                // Tandai pencarian aktif
+                searchActive = true;
+                
+                // Nonaktifkan form input selama pencarian
+                disableSearchForm();
+                
+                // Lakukan request pencarian
+                $.ajax({
+                    url: '/search',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        // Tandai pencarian sedang berjalan di background
+                        
+                        // Reset data progress
+                        lastProgressData = {
+                            processed: 0,
+                            total: parseInt(response.task_count) || 1000, // Gunakan jumlah task dari respons
+                            results: 0
+                        };
+                        
+                        // Mulai simulasi progress bar
+                        startProgressBarSimulation();
+                        
+                        // Tunggu sampai hasil siap dengan mengecek jumlah hasil
+                        checkSearchResultsComplete();
+                    },
+                    error: function() {
+                        // Tandai pencarian selesai
+                        searchActive = false;
+                        
+                        // Sembunyikan loading animasi
+                        $('#search-loading').hide();
+                        
+                        showStatusMessage('error', 'Terjadi kesalahan saat memulai pencarian');
+                        
+                        // Aktifkan kembali form karena terjadi error
+                        enableSearchForm();
+                    }
+                });
+            });
+
+            // Array quotes dari ilmuwan dunia
+            var scientistQuotes = [
+                "Imajinasi lebih penting daripada pengetahuan. - Albert Einstein",
+                "Satu-satunya sumber pengetahuan adalah pengalaman. - Albert Einstein",
+                "Dalam hidup, tidak ada yang perlu ditakuti, semuanya hanya perlu dipahami. - Marie Curie",
+                "Sains adalah cara terbaik untuk memuaskan rasa ingin tahu tanpa harus berpikir. - Karl Kraus",
+                "Jika kita tahu apa yang kita lakukan, itu bukan penelitian. - Albert Einstein",
+                "Penelitian adalah apa yang saya lakukan ketika saya tidak tahu apa yang saya lakukan. - Wernher von Braun",
+                "Sains tanpa agama lumpuh, agama tanpa sains buta. - Albert Einstein",
+                "Sains adalah apa yang kita pahami dengan baik untuk dijelaskan kepada komputer. Seni adalah yang lainnya. - Donald Knuth",
+                "Kegagalan bukanlah pilihan. - Gene Kranz",
+                "Kita tidak bisa memecahkan masalah dengan pola pikir yang sama saat kita menciptakannya. - Albert Einstein",
+                "Jika saya melihat lebih jauh, itu karena saya berdiri di atas bahu raksasa. - Isaac Newton",
+                "Sains adalah organisasi skeptisisme yang terorganisir. - Carl Sagan",
+                "Logika akan membawa Anda dari A ke B. Imajinasi akan membawa Anda ke mana saja. - Albert Einstein",
+                "Keberanian adalah ketakutan yang telah berdoa. - Alan Turing",
+                "Sains adalah seni memecahkan masalah dengan data. - Ada Lovelace"
+            ];
+            
+            // Variabel untuk menyimpan interval progress bar
+            var progressBarInterval = null;
+            
+            // Fungsi untuk memulai progress bar simulasi
+            function startProgressBarSimulation() {
+                // Hentikan interval sebelumnya jika ada
+                if (progressBarInterval) {
+                    clearInterval(progressBarInterval);
+                }
+                
+                // Variabel untuk menyimpan progress simulasi
+                var simulatedProgress = 0;
+                var targetProgress = 100;
+                var currentQuoteIndex = Math.floor(Math.random() * scientistQuotes.length);
+                
+                // Tampilkan quote pertama
+                $('#search-progress-log').text(scientistQuotes[currentQuoteIndex]);
+                
+                // Mulai interval baru
+                progressBarInterval = setInterval(function() {
+                    // Jika pencarian sudah tidak aktif, hentikan interval
+                    if (!searchActive) {
+                        clearInterval(progressBarInterval);
+                        return;
+                    }
+                    
+                    // Tambahkan progress secara bertahap dengan faktor random
+                    // Kecepatan 0.5x lebih lambat dari normal
+                    if (simulatedProgress < targetProgress) {
+                        // Tambah 0.5% - 1.5% per interval dengan faktor random
+                        var increment = 0.5 + (Math.random() * 1.0);
+                        simulatedProgress += increment;
+                        
+                        if (simulatedProgress > targetProgress) {
+                            simulatedProgress = targetProgress;
+                        }
+                    }
+                    
+                    // Update progress bar
+                    $('#search-progress-bar').css('width', simulatedProgress + '%');
+                    
+                    // Ganti quote setiap 5 detik
+                    if (Math.floor(simulatedProgress) % 5 === 0) {
+                        currentQuoteIndex = (currentQuoteIndex + 1) % scientistQuotes.length;
+                        $('#search-progress-log').text(scientistQuotes[currentQuoteIndex]);
+                    }
+                    
+                    // Jika sudah selesai, hentikan interval
+                    if (simulatedProgress >= targetProgress) {
+                        clearInterval(progressBarInterval);
+                    }
+                }, 1000); // Update setiap 1 detik (lebih lambat dari sebelumnya)
+            }
+            
+            // Fungsi untuk memeriksa apakah pencarian sudah selesai
+            function checkSearchResultsComplete() {
+                // Periksa hasil setiap 1 detik
+                setTimeout(function() {
+                    // Jika pencarian dihentikan, keluar dari function
+                    if (!searchActive) return;
+                    
+                    // Increment counter
+                    resultCheckCount++;
+                    
+                    // Jika sudah mencapai batas maksimum pengecekan, paksa selesai
+                    if (resultCheckCount >= MAX_CHECK_COUNT) {
+                        console.log("Reached maximum check count. Forcing finish.");
+                        finishSearch();
+                        return;
+                    }
+                    
+                    // Periksa progress pencarian
+                    $.ajax({
+                        url: '/search_progress',
+                        type: 'GET',
+                        timeout: 5000, // 5 detik timeout
+                        success: function(progressData) {
+                            // Simpan data progress terakhir
+                            if (progressData.total > 0) {
+                                lastProgressData = {
+                                    processed: progressData.processed,
+                                    total: progressData.total,
+                                    results: progressData.results
+                                };
+                            }
+                            
+                            // Jika sudah selesai, perbarui UI
+                            if (progressData.processed >= progressData.total && progressData.total > 0) {
+                                console.log('Search completed based on progress data');
+                                // Berikan waktu tambahan untuk hasil terakhir
+                                setTimeout(function() {
+                                    finishSearch();
+                                }, 2000);
+                            }
+                        },
+                        error: function() {
+                            console.log('Error checking search progress');
+                        }
+                    });
+                    
+                    $.get('/search_results', function(response) {
+                        // Update jumlah hasil
+                        lastProgressData.results = response.count;
+                        
+                        console.log("Checking results: " + response.count + " (attempt " + resultCheckCount + "/" + MAX_CHECK_COUNT + ")");
+                        
+                        // Jika pencarian masih berjalan, cek lagi nanti
+                        if (searchActive) {
+                            // Jika sudah ada hasil dan sudah cukup lama, anggap selesai
+                            if (response.count > 0 && resultCheckCount > 5) {
+                                // Berikan waktu tambahan untuk hasil terakhir
+                                setTimeout(function() {
+                                    finishSearch();
+                                }, 2000);
+                                return;
+                            } else if (response.count > 0) {
+                                // Ada hasil tapi masih belum cukup lama, periksa lagi
+                                checkSearchResultsComplete();
+                            } else if (resultCheckCount > 10) {
+                                // Sudah cek 10 kali tapi tidak ada hasil
+                                finishSearch();
+                            } else {
+                                // Masih belum ada hasil, tunggu lagi
+                                checkSearchResultsComplete();
+                            }
+                        } else {
+                            // Pencarian sudah tidak aktif, mungkin dibatalkan
+                            finishSearch();
+                        }
+                    });
+                }, 1000); // Cek setiap 1 detik
+            }
+
+            // Fungsi untuk menyelesaikan pencarian dan menampilkan hasil
+            function finishSearch() {
+                // Reset counter untuk pencarian berikutnya
+                resultCheckCount = 0;
+                
+                // Ambil semua hasil langsung tanpa mengecek status lagi
+                $.ajax({
+                    url: '/all_search_results?wait_for_complete=true',
+                    type: 'GET',
+                    success: function(response) {
+                        // Tandai pencarian selesai
+                        searchActive = false;
+                        // Sembunyikan loading animasi
+                        $('#search-loading').hide();
+                        // Tampilkan container hasil
+                        $('#results-container').show();
+                        // Update counter hasil
+                        $('#result-count').text(response.count + ' hasil');
+                        // Simpan hasil asli
+                        originalResults = response.results;
+                        filteredResults = response.results;
+                        // Inisialisasi filter
+                        initFilterOptions(originalResults);
+                        // Tampilkan filter
+                        $('#filter-form-content').parent().show();
+                        // Tampilkan hasil
+                        updateResults(filteredResults);
+                        // Aktifkan tombol reset
+                        activateResetButton();
+                        // Update tombol Replace All
+                        updateReplaceAllButton();
+                        // Sembunyikan pesan status - jangan tampilkan pesan sukses
+                        $('#status-message').hide();
+                    },
+                    error: function(xhr) {
+                        // Tandai pencarian selesai
+                        searchActive = false;
+                        
+                        // Sembunyikan loading animasi
+                        $('#search-loading').hide();
+                        
+                        // Tampilkan pesan error
+                        var errorMessage = 'Terjadi kesalahan saat mengambil hasil pencarian';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        showStatusMessage('error', errorMessage);
+                        
+                        // Aktifkan kembali form pencarian
+                        enableSearchForm();
+                    }
+                });
+            }
+
+            // Download hasil Excel
+            $('#download-excel-btn').off('click').on('click', function() {
+                // Download sesuai filter
+                if (filteredResults && filteredResults.length > 0) {
+                    // Pertama, ambil data terbaru dari server untuk memastikan kita memiliki replaced_query
+                    $.ajax({
+                        url: '/all_search_results',
+                        type: 'GET',
+                        success: function(response) {
+                            // Buat salinan dari filteredResults untuk dimodifikasi
+                            var dataToExport = JSON.parse(JSON.stringify(filteredResults));
+                            
+                            // Update status replaced dari DOM elemen ke dataToExport
+                            $('.result-item').each(function() {
+                                var $item = $(this);
+                                var fileName = $item.data('file_name');
+                                var lineNumber = $item.data('line_number');
+                                var isReplaced = $item.data('replaced') || false;
+                                
+                                // Cari hasil yang sesuai di dataToExport dan update status replaced
+                                for (var i = 0; i < dataToExport.length; i++) {
+                                    if (dataToExport[i].file_name === fileName && 
+                                        dataToExport[i].line_number === lineNumber) {
+                                        dataToExport[i].replaced = isReplaced;
+                                        
+                                        // Cari hasil yang sama di data server untuk mendapatkan replaced_query
+                                        if (isReplaced && response && response.results) {
+                                            for (var j = 0; j < response.results.length; j++) {
+                                                if (response.results[j].file_name === fileName && 
+                                                    response.results[j].line_number === lineNumber &&
+                                                    response.results[j].replaced_query) {
+                                                    dataToExport[i].replaced_query = response.results[j].replaced_query;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        break;
+                                    }
+                                }
+                            });
+                            
+                            // Download hasil filter
+                            $.ajax({
+                                url: '/download_excel_filtered',
+                                type: 'POST',
+                                data: JSON.stringify({results: dataToExport}),
+                                contentType: 'application/json',
+                                xhrFields: { responseType: 'blob' },
+                                success: function(data, status, xhr) {
+                                    var blob = new Blob([data], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+                                    var link = document.createElement('a');
+                                    var filename = xhr.getResponseHeader('Content-Disposition')?.split('filename=')[1] || 'Tablix Filtered.xlsx';
+                                    link.href = window.URL.createObjectURL(blob);
+                                    link.download = filename.replaceAll('"', '');
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                },
+                                error: function() {
+                                    showStatusMessage('error', 'Gagal mengunduh file excel hasil filter');
+                                }
+                            });
+                        },
+                        error: function() {
+                            showStatusMessage('error', 'Gagal mengambil data terbaru untuk Excel');
+                        }
+                    });
+                } else {
+                    // Jika tidak ada hasil yang difilter, tampilkan pesan error
+                    showStatusMessage('error', 'Tidak ada data yang dapat diunduh');
+                }
+            });
+
+            // Show Replacer button
+            $('#show-replacer-btn').click(function() {
+                // Show the modal
+                const replacerModal = new bootstrap.Modal(document.getElementById('replacerModal'));
+                replacerModal.show();
+                
+                // Fetch replacer data
+                fetch('/get_remote_servers')
+                    .then(response => response.json())
+                    .then(result => {
+                        const tableBody = document.getElementById('replacer-table-body');
+                        tableBody.innerHTML = ''; // Clear existing content
+                        
+                        if (result.success && result.data && result.data.length > 0) {
+                            result.data.forEach(item => {
+                                const remoteServerClass = getRemoteServerClass(item.remote_server);
+                                const row = document.createElement('tr');
+                                
+                                // Remote server dengan class warna
+                                const remoteServerCell = document.createElement('td');
+                                const remoteServerSpan = document.createElement('span');
+                                remoteServerSpan.className = `remote-server-color ${remoteServerClass}`;
+                                remoteServerSpan.textContent = item.remote_server;
+                                remoteServerCell.appendChild(remoteServerSpan);
+                                
+                                // Description
+                                const descriptionCell = document.createElement('td');
+                                descriptionCell.textContent = item.description;
+                                
+                                row.appendChild(remoteServerCell);
+                                row.appendChild(descriptionCell);
+                                tableBody.appendChild(row);
+                            });
+                        } else {
+                            tableBody.innerHTML = `<tr><td colspan="2" class="text-center">No remote server information available</td></tr>`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching remote server information:', error);
+                        document.getElementById('replacer-table-body').innerHTML = 
+                            `<tr><td colspan="2" class="text-center text-danger">Failed to load remote server information</td></tr>`;
+                    });
+            });
+
+            // Show Script Names button
+            $('#show-script-names-btn').click(function() {
+                // Show the modal
+                const scriptNamesModal = new bootstrap.Modal(document.getElementById('scriptNamesModal'));
+                scriptNamesModal.show();
+                
+                // Fill with script names
+                const tableBody = document.getElementById('script-names-table-body');
+                tableBody.innerHTML = ''; // Clear existing content
+                
+                if (scriptNames && Object.keys(scriptNames).length > 0) {
+                    Object.entries(scriptNames).forEach(([code, name]) => {
+                        const row = document.createElement('tr');
+                        
+                        // Kode script
+                        const codeCell = document.createElement('td');
+                        codeCell.textContent = code;
+                        
+                        // Nama script
+                        const nameCell = document.createElement('td');
+                        nameCell.textContent = name;
+                        
+                        row.appendChild(codeCell);
+                        row.appendChild(nameCell);
+                        tableBody.appendChild(row);
+                    });
+                } else {
+                    tableBody.innerHTML = `<tr><td colspan="2" class="text-center">Tidak ada informasi nama script yang tersedia</td></tr>`;
+                }
+                
+                // Setup search functionality
+                $('#script-search').on('keyup', function() {
+                    const searchValue = $(this).val().toLowerCase();
+                    $('#script-names-table-body tr').filter(function() {
+                        $(this).toggle($(this).text().toLowerCase().indexOf(searchValue) > -1);
+                    });
+                });
+                
+                // Clear search
+                $('#clear-search').click(function() {
+                    $('#script-search').val('').trigger('keyup');
+                });
+            });
+
+            // Event listeners untuk update file count saat opsi diubah
+            $('#skip-js').change(function() {
+                checkSourceFiles();
+            });
+
+            // Fungsi untuk menonaktifkan form pencarian
+            function disableSearchForm() {
+                $('#table-name').prop('disabled', true).trigger('change');
+                $('#keywords').prop('disabled', true).trigger('change');
+                $('#skip-js').prop('disabled', true);
+                $('#overwrite-source').prop('disabled', true);
+                $('#search-form button[type="submit"]').prop('disabled', true);
+                
+                // Tambahkan notifikasi bahwa form dinonaktifkan
+                if (!$('#form-disabled-notice').length) {
+                    var notice = $('<div id="form-disabled-notice" class="alert alert-warning mt-2">Form dinonaktifkan. Tekan tombol <strong>Cari Ulang</strong> untuk melakukan pencarian baru.</div>');
+                    $('#search-form').append(notice);
+                }
+            }
+            
+            // Fungsi untuk mengaktifkan form pencarian
+            function enableSearchForm() {
+                $('#table-name').prop('disabled', false).trigger('change');
+                $('#keywords').prop('disabled', false).trigger('change');
+                $('#skip-js').prop('disabled', false);
+                $('#overwrite-source').prop('disabled', false);
+                $('#search-form button[type="submit"]').prop('disabled', false);
+                
+                // Hapus notifikasi
+                $('#form-disabled-notice').remove();
+            }
+
+            // Fungsi untuk memperbarui tampilan hasil
+            function updateResults(results) {
+                // Jika tidak ada hasil, tampilkan pesan
+                if (!results || results.length === 0) {
+                    $('#results-list').html('<div class="alert alert-info">Tidak ada hasil yang ditemukan</div>');
+                    $('#filtered-count-badge').hide();
+                    return;
+                }
+                
+                // Tampilkan jumlah data terfilter
+                if (typeof originalResults !== 'undefined' && originalResults.length > 0 && results.length !== originalResults.length) {
+                    $('#filtered-count-badge').text('Filter: ' + results.length + ' dari ' + originalResults.length + ' data').show();
+                } else {
+                    $('#filtered-count-badge').hide();
+                }
+                
+                // Tampilkan hasil
+                displayResults(results);
+                
+                // Aktifkan tombol reset
+                activateResetButton();
+            }
+
+            // Event handler untuk tombol Replace All
+            $('#replace-all-btn').click(function() {
+                // Hitung jumlah hasil yang perlu direplace, termasuk kasus anomali manipulasi yang belum direplace
+                const replaceNeededItems = $('.result-item').filter(function() {
+                    // Cek apakah ini adalah item yang perlu direplace (needs_replace) atau
+                    // kasus anomali: query manipulasi yang belum direplace
+                    var queryTypes = $(this).data('query_type');
+                    var isManipulation = Array.isArray(queryTypes) ? queryTypes.includes('manipulation') : queryTypes === 'manipulation';
+                    return ($(this).data('needs_replace') === true || isManipulation) && !$(this).data('replaced');
+                });
+                
+                const replaceCount = replaceNeededItems.length;
+                
+                if (replaceCount === 0) {
+                    showStatusMessage('info', 'Tidak ada item yang perlu direplace');
+                    return;
+                }
+                
+                // Tampilkan konfirmasi dengan modal
+                showConfirmationModal(
+                    'Konfirmasi Replace All',
+                    `Apakah Anda yakin ingin melakukan penggantian pada ${replaceCount} item sekaligus? Aksi ini tidak dapat dibatalkan.`,
+                    function() {
+                        // Nonaktifkan tombol selama proses
+                        const btn = $('#replace-all-btn');
+                        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Memproses...');
+                        
+                        // Buat counter untuk melacak proses
+                        let successCount = 0;
+                        let failCount = 0;
+                        let totalProcessed = 0;
+                        
+                        // Fungsi untuk melakukan replace
+                        function processNextReplace(items, index) {
+                            if (index >= items.length) {
+                                // Semua selesai
+                                btn.prop('disabled', false).html('<i class="fas fa-sync-alt me-1"></i>Replace Semua');
+                                
+                                // Sembunyikan tombol jika semua sudah diproses dengan sukses
+                                if (successCount === items.length) {
+                                    btn.hide();
+                                    // Perbarui semua tombol Replace Script juga
+                                    updateReplaceScriptButtons();
+                                }
+                                
+                                showStatusMessage('success', `Replace Semua selesai: ${successCount} berhasil, ${failCount} gagal`);
+                                return;
+                            }
+                            
+                            const item = $(items[index]);
+                            const fileId = item.data('result_id');
+                            const fileName = item.data('file_name');
+                            const lineNumber = item.data('line_number');
+                            const remoteServer = item.data('remote_server');
+                            const keyword = item.data('keyword').toLowerCase();
+                            const query = item.data('query');
+                            const overwriteSource = $('#overwrite-source').is(':checked');
+                            
+                            // Dapatkan informasi tabel
+                            var tableName = item.data('table');
+                            var tableNames = [];
+                            var newTableNames = [];
+                            
+                            // Periksa apakah ini adalah multi-tabel
+                            if (item.data('tables')) {
+                                tableNames = item.data('tables');
+                            } else {
+                                tableNames = [tableName];
+                            }
+                            
+                            // Dapatkan nama tabel baru dari elemen DOM
+                            var newTableNamesElements = item.find('p:contains("Tabel di Remote Server:") .remote-server-color');
+                            if (newTableNamesElements.length > 0) {
+                                newTableNamesElements.each(function() {
+                                    newTableNames.push($(this).text());
+                                });
+                            } else {
+                                // Gunakan nama tabel yang sama jika tidak ada informasi tabel baru
+                                tableNames.forEach(function(tbl) {
+                                    newTableNames.push(tbl);
+                                });
+                            }
+                            
+                            // Kirim permintaan replace
+                            $.ajax({
+                                url: '/replace_file',
+                                type: 'POST',
+                                contentType: 'application/json',
+                                data: JSON.stringify({
+                                    file_name: fileName,
+                                    line_number: lineNumber,
+                                    remote_server: remoteServer,
+                                    keyword: keyword,
+                                    query: query,
+                                    table_names: tableNames,
+                                    new_table_names: newTableNames,
+                                    overwrite_source: overwriteSource
+                                }),
+                                success: function(response) {
+                                    totalProcessed++;
+                                    
+                                    if (response.success) {
+                                        successCount++;
+                                        
+                                        // Update UI untuk item yang berhasil
+                                        item.addClass('replaced-item');
+                                        item.data('replaced', true);
+                                        
+                                        // Hapus badge needs replace dan tambahkan badge replaced
+                                        var headerBadges = item.find('.card-header .d-flex.align-items-center');
+                                        headerBadges.find('.badge.bg-warning').removeClass('bg-warning').addClass('bg-success badge-replaced').text('Sudah Direplace');
+                                        
+                                        // Tambahkan indikator centang jika belum ada
+                                        if (item.find('.checked-indicator').length === 0) {
+                                            var checkedIndicator = $('<div class="checked-indicator"><i class="fas fa-check"></i></div>');
+                                            item.append(checkedIndicator);
+                                        }
+                                        
+                                        // Tampilkan info sukses di bawah tombol jika belum ada
+                                        if (item.find('.replace-success').length === 0) {
+                                            var successInfo = $('<div class="alert alert-success mt-2 py-2 replace-success"></div>')
+                                                .html('<i class="fas fa-check-circle me-1"></i>Berhasil direplace');
+                                            item.find('.replace-btn').after(successInfo);
+                                        }
+                                        
+                                        // Update originalResults
+                                        if (typeof originalResults !== 'undefined' && originalResults.length > 0) {
+                                            const originalItem = originalResults.find(o => o.file_name === fileName && o.line_number === lineNumber);
+                                            if (originalItem) {
+                                                originalItem.replaced = true;
+                                            }
+                                        }
+                                    } else {
+                                        failCount++;
+                                    }
+                                    
+                                    // Update status tombol dengan progres
+                                    btn.html(`<i class="fas fa-spinner fa-spin me-1"></i>Memproses ${totalProcessed}/${items.length}`);
+                                    
+                                    // Proses item berikutnya
+                                    processNextReplace(items, index + 1);
+                                },
+                                error: function() {
+                                    totalProcessed++;
+                                    failCount++;
+                                    
+                                    // Update status tombol dengan progres
+                                    btn.html(`<i class="fas fa-spinner fa-spin me-1"></i>Memproses ${totalProcessed}/${items.length}`);
+                                    
+                                    // Proses item berikutnya
+                                    processNextReplace(items, index + 1);
+                                }
+                            });
+                        }
+                        
+                        // Mulai proses dari item pertama
+                        processNextReplace(replaceNeededItems, 0);
+                    }
+                );
+            });
+
+            // Event handler untuk tombol Replace
+            $(document).on('click', '.replace-btn', function() {
+                var btn = $(this);
+                var resultItem = btn.closest('.result-item');
+                var fileId = btn.data('result_id');
+                var fileName = btn.data('file_name');
+                var lineNumber = btn.data('line_number');
+                var remoteServer = resultItem.data('remote_server');
+                var keyword = resultItem.data('keyword').toLowerCase();
+                var query = resultItem.data('query');
+                var overwriteSource = $('#overwrite-source').is(':checked');
+                
+                // Dapatkan informasi tabel
+                var tableName = resultItem.data('table');
+                var tableNames = [];
+                var newTableNames = [];
+                
+                // Periksa apakah ini adalah multi-tabel
+                if (resultItem.data('tables')) {
+                    tableNames = resultItem.data('tables');
+                } else {
+                    tableNames = [tableName];
+                }
+                
+                // Dapatkan nama tabel baru dari elemen DOM
+                var newTableNamesElements = resultItem.find('p:contains("Tabel di Remote Server:") .remote-server-color');
+                if (newTableNamesElements.length > 0) {
+                    newTableNamesElements.each(function() {
+                        newTableNames.push($(this).text());
+                    });
+                } else {
+                    // Gunakan nama tabel yang sama jika tidak ada informasi tabel baru
+                    tableNames.forEach(function(tbl) {
+                        newTableNames.push(tbl);
+                    });
+                }
+                
+                // Nonaktifkan tombol selama proses
+                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Mereplace...');
+                
+                // Kirim permintaan replace
+                $.ajax({
+                    url: '/replace_file',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        file_name: fileName,
+                        line_number: lineNumber,
+                        remote_server: remoteServer,
+                        keyword: keyword,
+                        query: query,
+                        table_names: tableNames,
+                        new_table_names: newTableNames,
+                        overwrite_source: overwriteSource
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            // Update UI untuk item yang berhasil
+                            resultItem.addClass('replaced-item');
+                            resultItem.data('replaced', true);
+                            btn.hide();
+                            
+                            // Update originalResults
+                            if (typeof originalResults !== 'undefined' && originalResults.length > 0) {
+                                const originalItem = originalResults.find(o => o.file_name === fileName && o.line_number === lineNumber);
+                                if (originalItem) {
+                                    originalItem.replaced = true;
+                                }
+                            }
+                            
+                            // Hapus badge needs replace dan tambahkan badge replaced
+                            var headerBadges = resultItem.find('.card-header .d-flex.align-items-center');
+                            headerBadges.find('.badge.bg-warning').removeClass('bg-warning').addClass('bg-success badge-replaced').text('Sudah Direplace');
+                            
+                            // Tambahkan indikator centang jika belum ada
+                            if (resultItem.find('.checked-indicator').length === 0) {
+                                var checkedIndicator = $('<div class="checked-indicator"><i class="fas fa-check"></i></div>');
+                                resultItem.append(checkedIndicator);
+                            }
+                            
+                            // Tampilkan info sukses di bawah tombol jika belum ada
+                            if (resultItem.find('.replace-success').length === 0) {
+                                var successInfo = $('<div class="alert alert-success mt-2 py-2 replace-success"></div>')
+                                    .html('<i class="fas fa-check-circle me-1"></i>Berhasil direplace');
+                                btn.after(successInfo);
+                            }
+                            
+                            // Aktifkan kembali tombol
+                            btn.prop('disabled', false).html('<i class="fas fa-sync-alt me-1"></i>Replace');
+                            
+                            // Update Replace Script button dan Replace All button
+                            updateReplaceScriptButtons();
+                            updateReplaceAllButton();
+                            
+                            // Notifikasi sukses dengan modal
+                            showStatusMessage('success', 'File berhasil direplace: ' + fileName + ' (baris ' + lineNumber + ')');
+                        } else {
+                            // Aktifkan kembali tombol
+                            btn.prop('disabled', false).html('<i class="fas fa-sync-alt me-1"></i>Replace');
+                            
+                            // Tampilkan pesan error dengan modal
+                            showStatusMessage('error', response.message || 'Gagal mengganti konten');
+                        }
+                    },
+                    error: function(xhr) {
+                        // Aktifkan kembali tombol
+                        btn.prop('disabled', false).html('<i class="fas fa-sync-alt me-1"></i>Replace');
+                        
+                        // Tampilkan pesan error dengan modal
+                        var errorMsg = 'Gagal mengganti konten';
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        showStatusMessage('error', errorMsg);
+                    },
+                    complete: function() {
+                        // btn.hide(); // Ensure this is removed or commented out
+                    }
+                });
+            });
+
+            // Event handler untuk tombol copy
+            $(document).on('click', '.copy-btn', function(e) {
+                e.stopPropagation();
+                
+                var btn = $(this);
+                var preElement = btn.closest('.query-text');
+                
+                // Dapatkan teks asli tanpa format HTML
+                var textToCopy = preElement.text().replace(/Copy to clipboard/g, '');
+                
+                // Gunakan Clipboard API jika tersedia
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(textToCopy)
+                        .then(function() {
+                            showCopySuccess(btn);
+                        })
+                        .catch(function(err) {
+                            // Fallback jika gagal
+                            fallbackCopy(textToCopy, btn);
+                        });
+                } else {
+                    // Fallback untuk browser yang tidak mendukung Clipboard API
+                    fallbackCopy(textToCopy, btn);
+                }
+            });
+
+            // Event handler untuk tombol copy filename
+            $(document).on('click', '.copy-filename-btn', function(e) {
+                e.stopPropagation();
+                
+                var btn = $(this);
+                var filename = btn.data('filename');
+                
+                // Gunakan Clipboard API jika tersedia
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(filename)
+                        .then(function() {
+                            showCopySuccess(btn);
+                        })
+                        .catch(function(err) {
+                            // Fallback jika gagal
+                            fallbackCopy(filename, btn);
+                        });
+                } else {
+                    // Fallback untuk browser yang tidak mendukung Clipboard API
+                    fallbackCopy(filename, btn);
+                }
+            });
+
+            // Fungsi helper untuk fallback copy
+            function fallbackCopy(text, btn) {
+                // Buat textarea sementara
+                var textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";  // Hindari scrolling ke textarea
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                
+                try {
+                    // Eksekusi perintah copy
+                    var successful = document.execCommand('copy');
+                    if (successful) {
+                        showCopySuccess(btn);
+                    } else {
+                        console.error('Fallback: Copy command tidak berhasil');
+                    }
+                } catch (err) {
+                    console.error('Fallback: Error dalam execCommand', err);
+                }
+                
+                // Bersihkan
+                document.body.removeChild(textArea);
+            }
+
+            // Fungsi untuk menampilkan indikator sukses
+            function showCopySuccess(btn) {
+                btn.addClass('copy-success');
+                btn.html('<i class="fas fa-check"></i>');
+                
+                // Kembalikan ke status awal setelah 2 detik
+                setTimeout(function() {
+                    btn.removeClass('copy-success');
+                    btn.html('<i class="fas fa-copy"></i>');
+                }, 2000);
+            }
+
+            // Event handler untuk tombol Replace Script
+            $(document).on('click', '.replace-script-btn', function() {
+                var btn = $(this);
+                var fileName = btn.data('file_name');
+                var replaceCount = btn.data('replace_count');
+                
+                if (replaceCount === 0) {
+                    showStatusMessage('info', 'Tidak ada item yang perlu direplace di script ini');
+                    return;
+                }
+                
+                // Tampilkan konfirmasi dengan modal
+                showConfirmationModal(
+                    'Konfirmasi Replace Script',
+                    `Apakah Anda yakin ingin melakukan penggantian untuk semua item (${replaceCount}) di file ${fileName}? Aksi ini tidak dapat dibatalkan.`,
+                    function() {
+                        // Nonaktifkan tombol selama proses
+                        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Memproses...');
+                        
+                        // Ambil semua item yang perlu direplace di file ini
+                        var itemsToReplace = $('.result-item').filter(function() {
+                            return $(this).data('file_name') === fileName && 
+                                $(this).data('needs_replace') === true && 
+                                !$(this).data('replaced');
+                        });
+                        
+                        // Buat counter untuk melacak proses
+                        let successCount = 0;
+                        let failCount = 0;
+                        let totalProcessed = 0;
+                        
+                        // Fungsi untuk melakukan replace
+                        function processNextReplaceInScript(items, index) {
+                            if (index >= items.length) {
+                                // Semua selesai
+                                btn.prop('disabled', false).html('<i class="fas fa-sync-alt me-1"></i>Replace Script');
+                                
+                                // Jika semua berhasil, sembunyikan tombol
+                                if (successCount === items.length) {
+                                    btn.hide();
+                                    // Perbarui semua tombol Replace Script juga
+                                    updateReplaceScriptButtons();
+                                }
+                                
+                                showStatusMessage('success', `Penggantian Script selesai: ${successCount} berhasil, ${failCount} gagal`);
+                                return;
+                            }
+                            
+                            const item = $(items[index]);
+                            const fileId = item.data('result_id');
+                            const fileName = item.data('file_name');
+                            const lineNumber = item.data('line_number');
+                            const remoteServer = item.data('remote_server');
+                            const keyword = item.data('keyword').toLowerCase();
+                            const query = item.data('query');
+                            const overwriteSource = $('#overwrite-source').is(':checked');
+                            
+                            // Dapatkan informasi tabel
+                            var tableName = item.data('table');
+                            var tableNames = [];
+                            var newTableNames = [];
+                            
+                            // Periksa apakah ini adalah multi-tabel
+                            if (item.data('tables')) {
+                                tableNames = item.data('tables');
+                            } else {
+                                tableNames = [tableName];
+                            }
+                            
+                            // Dapatkan nama tabel baru untuk setiap tabel
+                            var newTableNamesElements = item.find('p:contains("Tabel di Remote Server:") .remote-server-color');
+                            if (newTableNamesElements.length > 0) {
+                                newTableNamesElements.each(function() {
+                                    newTableNames.push($(this).text());
+                                });
+                            } else {
+                                // Gunakan nama tabel yang sama jika tidak ada informasi tabel baru
+                                tableNames.forEach(function(tbl) {
+                                    newTableNames.push(tbl);
+                                });
+                            }
+                            
+                            // Kirim permintaan replace
+                            $.ajax({
+                                url: '/replace_file',
+                                type: 'POST',
+                                contentType: 'application/json',
+                                data: JSON.stringify({
+                                    file_name: fileName,
+                                    line_number: lineNumber,
+                                    remote_server: remoteServer,
+                                    keyword: keyword,
+                                    query: query,
+                                    table_names: tableNames,
+                                    new_table_names: newTableNames,
+                                    overwrite_source: overwriteSource
+                                }),
+                                success: function(response) {
+                                    totalProcessed++;
+                                    
+                                    if (response.success) {
+                                        successCount++;
+                                        
+                                        // Update UI untuk item yang berhasil
+                                        item.addClass('replaced-item');
+                                        item.data('replaced', true);
+                                        
+                                        // Hapus badge needs replace dan tambahkan badge replaced
+                                        var headerBadges = item.find('.card-header .d-flex.align-items-center');
+                                        headerBadges.find('.badge.bg-warning').removeClass('bg-warning').addClass('bg-success badge-replaced').text('Sudah Direplace');
+                                        
+                                        // Tambahkan indikator centang jika belum ada
+                                        if (item.find('.checked-indicator').length === 0) {
+                                            var checkedIndicator = $('<div class="checked-indicator"><i class="fas fa-check"></i></div>');
+                                            item.append(checkedIndicator);
+                                        }
+                                        
+                                        // Tampilkan info sukses di bawah tombol jika belum ada
+                                        var replaceBtn = item.find('.replace-btn');
+                                        if (replaceBtn.length > 0) {
+                                            replaceBtn.hide(); // Hide the replace button
+                                            if (item.find('.replace-success').length === 0) {
+                                                var successInfo = $('<div class="alert alert-success mt-2 py-2 replace-success"></div>')
+                                                    .html('<i class="fas fa-check-circle me-1"></i>Berhasil direplace');
+                                                replaceBtn.after(successInfo);
+                                            }
+                                        }
+                                        
+                                        // Update originalResults
+                                        if (typeof originalResults !== 'undefined' && originalResults.length > 0) {
+                                            const originalItem = originalResults.find(o => o.file_name === fileName && o.line_number === lineNumber);
+                                            if (originalItem) {
+                                                originalItem.replaced = true;
+                                            }
+                                        }
+                                    } else {
+                                        failCount++;
+                                    }
+                                    
+                                    // Update status tombol dengan progres
+                                    btn.html(`<i class="fas fa-spinner fa-spin me-1"></i>Memproses ${totalProcessed}/${items.length}`);
+                                    
+                                    // Proses item berikutnya
+                                    processNextReplaceInScript(items, index + 1);
+                                },
+                                error: function() {
+                                    totalProcessed++;
+                                    failCount++;
+                                    
+                                    // Update status tombol dengan progres
+                                    btn.html(`<i class="fas fa-spinner fa-spin me-1"></i>Memproses ${totalProcessed}/${items.length}`);
+                                    
+                                    // Proses item berikutnya
+                                    processNextReplaceInScript(items, index + 1);
+                                }
+                            });
+                        }
+                        
+                        // Mulai proses dari item pertama
+                        processNextReplaceInScript(itemsToReplace, 0);
+                    }
+                );
+            });
+
+            // Event handler untuk tombol Pergi ke code
+            $(document).on('click', '.goto-code-btn', function() {
+                var btn = $(this);
+                var fileName = btn.data('file_name');
+                var lineNumber = btn.data('line_number');
+                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menuju...');
+                $.ajax({
+                    url: '/goto_code',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        file_name: fileName,
+                        line_number: lineNumber
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            btn.removeClass('btn-info').addClass('btn-success')
+                               .html('<i class="fas fa-check me-1"></i>Berhasil dibuka!');
+                        } else {
+                            btn.removeClass('btn-info').addClass('btn-danger')
+                               .html('<i class="fas fa-times me-1"></i>Gagal');
+                            alert(response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        btn.removeClass('btn-info').addClass('btn-danger')
+                           .html('<i class="fas fa-times me-1"></i>Error');
+                        alert('Terjadi error saat membuka file di Intellij!');
+                    },
+                    complete: function() {
+                        setTimeout(function() {
+                            btn.prop('disabled', false).removeClass('btn-success btn-danger').addClass('btn-info').html('<i class="fas fa-location-arrow me-1"></i>Pergi ke code');
+                        }, 2000);
+                    }
+                });
+            });
+
+            // Handler untuk atur path Intellij
+            $('#set-intellij-path').on('click', function() {
+                var path = $('#intellij-path').val();
+                var btn = $(this);
+                btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
+                $.ajax({
+                    url: '/set_intellij_path',
+                    type: 'POST',
+                    data: { intellij_path: path },
+                    success: function(response) {
+                        if (response.status === 'success') {
+                            btn.removeClass('btn-primary').addClass('btn-success').html('<i class="fas fa-check me-1"></i>Berhasil!');
+                        } else {
+                            btn.removeClass('btn-primary').addClass('btn-danger').html('<i class="fas fa-times me-1"></i>Gagal');
+                            alert(response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        btn.removeClass('btn-primary').addClass('btn-danger').html('<i class="fas fa-times me-1"></i>Error');
+                        alert('Terjadi error saat menyimpan path Intellij!');
+                    },
+                    complete: function() {
+                        setTimeout(function() {
+                            btn.prop('disabled', false).removeClass('btn-success btn-danger').addClass('btn-primary').html('<i class="fas fa-folder-open me-1"></i> Atur Path');
+                        }, 2000);
+                    }
+                });
+            });
+
+            // Fungsi untuk memperbarui status tombol Replace Script pada semua grup file
+            function updateReplaceScriptButtons() {
+                // Cek setiap grup file
+                $('.replace-script-btn').each(function() {
+                    var btn = $(this);
+                    var fileName = btn.data('file_name');
+                    
+                    // Hitung jumlah item yang masih perlu direplace dalam file ini
+                    var needsReplaceCount = $('.result-item').filter(function() {
+                        return $(this).data('file_name') === fileName && 
+                               $(this).data('needs_replace') === true && 
+                               !$(this).data('replaced');
+                    }).length;
+                    
+                    // Update data atau sembunyikan tombol jika tidak ada yang perlu direplace
+                    btn.data('replace_count', needsReplaceCount);
+                    if (needsReplaceCount === 0) {
+                        btn.hide();
+                    } else {
+                        btn.html(`<i class="fas fa-sync-alt me-1"></i>Replace Script (${needsReplaceCount})`);
+                    }
+                });
+                
+                // Sembunyikan tombol Replace All jika tidak ada lagi yang perlu direplace
+                var totalNeedsReplace = $('.result-item').filter(function() {
+                    return $(this).data('needs_replace') === true && !$(this).data('replaced');
+                }).length;
+                
+                if (totalNeedsReplace === 0) {
+                    $('#replace-all-btn').hide();
+                } else {
+                    $('#replace-all-btn').html(`<i class="fas fa-sync-alt me-1"></i>Replace Semua (${totalNeedsReplace})`);
+                }
+            }
+
+            // Function to show/hide and update Replace All button
+            function updateReplaceAllButton() {
+                // Count items that need replacement, termasuk kasus anomali manipulasi yang belum direplace
+                var replaceNeededCount = $('.result-item').filter(function() {
+                    // Cek apakah ini adalah item yang perlu direplace (needs_replace) atau
+                    // kasus anomali: query manipulasi yang belum direplace
+                    var queryTypes = $(this).data('query_type');
+                    var isManipulation = Array.isArray(queryTypes) ? queryTypes.includes('manipulation') : queryTypes === 'manipulation';
+                    return ($(this).data('needs_replace') === true || isManipulation) && !$(this).data('replaced');
+                }).length;
+                
+                var replaceAllBtn = $('#replace-all-btn');
+                
+                if (replaceNeededCount > 0) {
+                    replaceAllBtn.html('<i class="fas fa-sync-alt me-1"></i>Replace Semua (' + replaceNeededCount + ')').show();
+                } else {
+                    replaceAllBtn.hide();
+                }
+            }
+
+            // Variabel global untuk hasil pencarian asli dan hasil filter
+            var originalResults = [];
+            var filteredResults = [];
+
+            // Setelah finishSearch, simpan originalResults dan inisialisasi filter
+            function finishSearch() {
+                // ... existing code ...
+                $.ajax({
+                    url: '/all_search_results?wait_for_complete=true',
+                    type: 'GET',
+                    success: function(response) {
+                        // Tandai pencarian selesai
+                        searchActive = false;
+                        // Sembunyikan loading animasi
+                        $('#search-loading').hide();
+                        // Tampilkan container hasil
+                        $('#results-container').show();
+                        // Update counter hasil
+                        $('#result-count').text(response.count + ' hasil');
+                        // Simpan hasil asli
+                        originalResults = response.results;
+                        filteredResults = response.results;
+                        // Inisialisasi filter
+                        initFilterOptions(originalResults);
+                        // Tampilkan filter
+                        $('#filter-form-content').parent().show();
+                        // Tampilkan hasil
+                        updateResults(filteredResults);
+                        // Aktifkan tombol reset
+                        activateResetButton();
+                        // Update tombol Replace All
+                        updateReplaceAllButton();
+                        // Sembunyikan pesan status - jangan tampilkan pesan sukses
+                        $('#status-message').hide();
+                    },
+                    // ... existing code ...
+                });
+            }
+
+            // Inisialisasi opsi filter dinamis
+            function initFilterOptions(results) {
+                // Remote Server
+                var remoteServers = new Set();
+                // Tabel
+                var tables = new Set();
+                results.forEach(function(r) {
+                    if (r.remote_server && r.remote_server !== "") remoteServers.add(r.remote_server);
+                    if (r.table_name && r.table_name !== "") tables.add(r.table_name);
+                });
+                var remoteServerSelect = $('#filter-remote-server');
+                remoteServerSelect.empty().append('<option value="ALL">ALL</option>');
+                Array.from(remoteServers).sort().forEach(function(s) {
+                    remoteServerSelect.append('<option value="'+s+'">'+s+'</option>');
+                });
+                var tableSelect = $('#filter-table');
+                tableSelect.empty().append('<option value="ALL">ALL</option>');
+                Array.from(tables).sort().forEach(function(t) {
+                    tableSelect.append('<option value="'+t+'">'+t+'</option>');
+                });
+            }
+
+            // Event handler filter
+            $('#filter-form select').on('change', function() {
+                applyFilter();
+            });
+            $('#reset-filter-btn').on('click', function() {
+                $('#filter-form select').val('ALL');
+                applyFilter();
+            });
+
+            function applyFilter() {
+                var qtype = $('#filter-query-type').val();
+                var rstatus = $('#filter-replace-status').val();
+                var rserver = $('#filter-remote-server').val();
+                var tname = $('#filter-table').val();
+                var difficulty = $('#filter-difficulty').val();
+                
+                filteredResults = originalResults.filter(function(r) {
+                    // Filter jenis query
+                    var qtypeMatch = (qtype === 'ALL') ||
+                        (Array.isArray(r.query_type) && (
+                            (qtype === 'select' && r.query_type.includes('select') && !r.query_type.includes('manipulation')) ||
+                            (qtype === 'manipulation' && r.query_type.includes('manipulation') && !r.query_type.includes('select')) ||
+                            (qtype === 'select+manipulation' && r.query_type.includes('select') && r.query_type.includes('manipulation'))
+                        ));
+                    // Filter status replace
+                    var rstatusMatch = (rstatus === 'ALL') ||
+                        (rstatus === 'replaced' && r.replaced) ||
+                        (rstatus === 'notreplaced' && !r.replaced);
+                    // Filter difficulty
+                    var difficultyMatch = (difficulty === 'ALL') ||
+                        (difficulty === r.difficulty);
+                    // Filter remote server
+                    var rserverMatch = (rserver === 'ALL') || (r.remote_server === rserver);
+                    // Filter tabel
+                    var tnameMatch = (tname === 'ALL') || (r.table_name === tname);
+                    return qtypeMatch && rstatusMatch && rserverMatch && tnameMatch && difficultyMatch;
+                });
+                updateResults(filteredResults);
+            }
+
+            // Sembunyikan filter di awal
+            $('#filter-form-content').parent().hide();
+        });
+
+        function checkSourceFiles() {
+            // Fungsi untuk mengecek jumlah file di folder source
+            var skipJs = $('#skip-js').is(':checked');
+            
+            $.get('/source_file_count', { skip_js: skipJs }, function(response) {
+                if (response.status === 'success') {
+                    $('#file-count').text(response.count);
+                    $('#file-info').show();
+                } else {
+                    $('#file-info').hide();
+                }
+            }).fail(function() {
+                $('#file-info').hide();
+            });
+        }
+
+        function showUploadStatus(type, message) {
+            var statusDiv = $('#upload-status');
+            statusDiv.removeClass('alert-success alert-danger alert-info');
+            
+            if (type === 'success') {
+                statusDiv.addClass('alert-success');
+            } else if (type === 'error') {
+                statusDiv.addClass('alert-danger');
+            } else {
+                statusDiv.addClass('alert-info');
+            }
+            
+            statusDiv.text(message).show();
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(function() {
+                    statusDiv.fadeOut();
+                }, 5000);
+            }
+        }
+
+        function showStatusMessage(type, message) {
+            // Menggunakan modal Bootstrap alih-alih alert biasa
+            var modalTitle = $('#notificationModalLabel');
+            var notificationIcon = $('#notification-icon');
+            var notificationMessage = $('#notification-message');
+            var modalContent = $('.modal-content');
+            
+            // Reset class 
+            modalContent.removeClass('border-success border-danger border-info');
+            notificationIcon.empty();
+            
+            // Set judul modal
+            if (type === 'success') {
+                modalTitle.text('Sukses');
+                modalContent.addClass('border-success');
+                notificationIcon.html('<i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>');
+            } else if (type === 'error') {
+                modalTitle.text('Error');
+                modalContent.addClass('border-danger');
+                notificationIcon.html('<i class="fas fa-times-circle text-danger" style="font-size: 3rem;"></i>');
+            } else {
+                modalTitle.text('Informasi');
+                modalContent.addClass('border-info');
+                notificationIcon.html('<i class="fas fa-info-circle text-info" style="font-size: 3rem;"></i>');
+            }
+            
+            // Set pesan
+            notificationMessage.text(message);
+            
+            // Tampilkan modal
+            var notificationModal = new bootstrap.Modal(document.getElementById('notificationModal'));
+            notificationModal.show();
+        }
+
+        function displayResults(results) {
+            var container = $('#results-list');
+            container.empty();
+            
+            // Peringatan jika data besar
+            if (results.length > 1000) {
+                var warningDiv = $('<div class="alert alert-warning mb-3"></div>');
+                warningDiv.text('Menampilkan ' + results.length + ' hasil. Halaman mungkin membutuhkan waktu untuk memuat.');
+                container.append(warningDiv);
+            }
+            
+            // Kelompokkan hasil berdasarkan file_name menggunakan pendekatan chunking
+            var groupedResults = {};
+            var fileNames = [];
+            
+            // Fase 1: Mengelompokkan hasil berdasarkan file name
+            for (var i = 0; i < results.length; i++) {
+                var result = results[i];
+                if (!groupedResults[result.file_name]) {
+                    groupedResults[result.file_name] = [];
+                    fileNames.push(result.file_name);
+                }
+                groupedResults[result.file_name].push(result);
+            }
+            
+            // Array warna flat untuk background
+            var flatColors = [
+                '#3498db', '#9b59b6', '#2ecc71', '#e74c3c', '#f39c12', 
+                '#1abc9c', '#34495e', '#d35400', '#16a085', '#27ae60', 
+                '#7f8c8d', '#8e44ad', '#c0392b', '#2980b9'
+            ];
+            
+            // Acak urutan warna
+            shuffleArray(flatColors);
+            
+            // Proses semua grup secara langsung, tanpa chunking
+            var fileIndex = 1;
+            
+            // Proses semua file
+            fileNames.forEach(function(fileName) {
+                var groupResults = groupedResults[fileName];
+                
+                // Urutkan hasil berdasarkan nomor baris
+                groupResults.sort(function(a, b) {
+                    return parseInt(a.line_number) - parseInt(b.line_number);
+                });
+                
+                var resultCount = groupResults.length;
+                
+                // Ambil warna untuk grup file ini
+                var colorIndex = (fileIndex - 1) % flatColors.length;
+                var groupColor = flatColors[colorIndex];
+                
+                // Buat card untuk setiap kelompok file
+                var groupCard = $('<div class="card result-card mb-4 file-group-colors"></div>');
+                
+                // Set warna header card sesuai warna yang dipilih dengan transparansi
+                var headerColor = groupColor + '20'; // Tambahkan 20 sebagai transparansi (12.5%)
+                
+                // Header card dengan nama file dan jumlah hasil
+                var cardHeader = $('<div class="card-header d-flex justify-content-between align-items-center"></div>')
+                    .css('background-color', headerColor);
+                
+                // Tambahkan badge untuk nomor urut file
+                var badgeColor = groupColor;
+                var fileIndexLabel = $('<span class="badge me-2"></span>')
+                    .html('<small>Script No. </small>' + fileIndex)
+                    .css('background-color', badgeColor)
+                    .css('color', '#fff');
+                
+                var headerLeft = $('<div class="d-flex align-items-center"></div>');
+                headerLeft.append(fileIndexLabel);
+                
+                var fileTitle = $('<h5 class="mb-0"></h5>').text(fileName);
+                headerLeft.append(fileTitle);
+                
+                // Ambil nama script jika ada
+                var scriptName = scriptNames[fileName] || "";
+                if (scriptName) {
+                    var scriptNameBadge = $('<h5 class="mb-0"></h5>').text('－' + scriptName);
+                    headerLeft.append(scriptNameBadge);
+                }
+                
+                // Tombol copy untuk file name
+                var copyFilenameBtn = $('<button class="btn btn-sm btn-light ms-2 copy-filename-btn" title="Copy filename"></button>')
+                    .html('<i class="fas fa-copy"></i>')
+                    .data('filename', fileName);
+                headerLeft.append(copyFilenameBtn);
+                
+                var headerRight = $('<div class="d-flex align-items-center"></div>');
+                var resultBadge = $('<span class="badge bg-primary me-2"></span>').text(resultCount + ' hasil');
+                headerRight.append(resultBadge);
+                
+                // Tambahkan tombol Replace Script jika ada item yang perlu direplace
+                var needsReplaceCount = groupResults.filter(function(r) { return r.needs_replace && !r.replaced; }).length;
+                if (needsReplaceCount > 0) {
+                    var replaceScriptBtn = $('<button class="btn btn-sm btn-warning me-2 replace-script-btn"></button>')
+                        .html('<i class="fas fa-sync-alt me-1"></i>Replace Script (' + needsReplaceCount + ')')
+                        .data('file_name', fileName)
+                        .data('replace_count', needsReplaceCount);
+                    headerRight.append(replaceScriptBtn);
+                }
+                
+                // Tambahkan tombol toggle
+                var toggleButton = $('<button class="btn btn-sm btn-outline-secondary toggle-results"></button>');
+                var toggleIcon = $('<i class="fas fa-chevron-up"></i>');
+                toggleButton.append(toggleIcon);
+                headerRight.append(toggleButton);
+                
+                cardHeader.append(headerLeft);
+                cardHeader.append(headerRight);
+                groupCard.append(cardHeader);
+                
+                // Body card berisi semua hasil dalam file tersebut
+                var mainCardBody = $('<div class="card-body p-0"></div>'); // 1. Create mainCardBody
+                var resultsList = $('<div class="results-list"></div>');
+                
+                // Tambahkan setiap hasil ke dalam list
+                var itemIndex = 1;
+                groupResults.forEach(function(result) {
+                    var resultItem = createResultItem(result, itemIndex, groupColor);
+                    resultsList.append(resultItem);
+                    itemIndex++;
+                });
+                
+                // Tambahkan results list ke mainCardBody
+                mainCardBody.append(resultsList); // 2. Append resultsList to mainCardBody
+                
+                // Tambahkan mainCardBody ke groupCard
+                groupCard.append(mainCardBody); // 3. Append mainCardBody to groupCard
+                
+                // Sebelumnya, tambahkan highlight jika ada
+                groupResults.sort(function(a, b) {
+                    return parseInt(a.line_number) - parseInt(b.line_number);
+                });
+
+                if (groupResults.length > 0 && groupResults[0].file_highlights && groupResults[0].file_highlights.length > 0) {
+                    var collapseId = 'collapse-highlight-' + Math.random().toString(36).substr(2, 8);
+                    var cardDiv = $('<div></div>');
+                    // Header collapse sebagai tombol, warna lebih gelap, tidak bold
+                    var collapseHeader = $(
+                        '<button class="p-2 w-100 text-start border-0" style="cursor:pointer; user-select:none;" '
+                        + 'type="button" data-bs-toggle="collapse" data-bs-target="#'+collapseId+'" aria-expanded="false" aria-controls="'+collapseId+'">'
+                        + '<i class="fas fa-info-circle me-2"></i>Informasi Tambahan: Execute dan Generate Form'
+                        + '<span class="float-end"><i class="fas fa-chevron-down"></i></span>'
+                        + '</button>'
+                    );
+                    cardDiv.append(collapseHeader);
+                    // Card body berisi collapse
+                    var infoSectionCardBody = $('<div class="card-body p-2"></div>'); // 4. Renamed from cardBody
+                    var collapseBody = $('<div id="'+collapseId+'" class="collapse"></div>');
+                    var table = $('<table class="table table-xs table-bordered mb-0" style="margin-bottom:12.52px !important; margin-top:0"></table>');
+                    var thead = $('<thead></thead>');
+                    var headerRow = $('<tr></tr>');
+                    headerRow.append($('<th></th>').text('No').css('width','5%'));
+                    headerRow.append($('<th></th>').text('Fungsi').css('width','20%'));
+                    headerRow.append($('<th></th>').text('Form ID/Value').css('width','45%'));
+                    headerRow.append($('<th></th>').text('Aksi').css('width','30%'));
+                    thead.append(headerRow);
+                    table.append(thead);
+
+                    // --- FILTER DUPLIKAT ---
+                    var highlights = groupResults[0].file_highlights;
+                    var uniqueHighlights = [];
+                    var seen = new Set();
+                    highlights.forEach(function(hl) {
+                        // Untuk execute, key = type + line (abaikan value)
+                        // Untuk generateForm, key = type + value + line
+                        var key = hl.type === 'execute' ? (hl.type + '|' + hl.line) : (hl.type + '|' + hl.value + '|' + hl.line);
+                        if (!seen.has(key)) {
+                            uniqueHighlights.push(hl);
+                            seen.add(key);
+                        }
+                    });
+                    uniqueHighlights.forEach(function(hl, idx) {
+                        var fungsi = hl.type === 'generateForm' ? '<span class="badge bg-danger">generateForm</span>' : '<span class="badge bg-warning text-dark">execute</span>';
+                        var formId = hl.type === 'generateForm' ? hl.value : '-';
+                        // Cek formId ke scriptNames (window.scriptNames)
+                        var formName = '';
+                        if (typeof scriptNames !== 'undefined' && formId && scriptNames[formId]) {
+                            formName = scriptNames[formId];
+                        }
+                        var formIdDisplay = formName ? (formId + ' - ' + formName) : formId;
+                        var gotoBtn = $('<button class="btn btn-info btn-sm goto-code-btn" title="Pergi ke baris kode ini"></button>')
+                            .html('<i class="fas fa-location-arrow me-1"></i>Pergi ke code')
+                            .data('file_name', fileName)
+                            .data('line_number', hl.line)
+                            .css({'margin-right':'4px'});
+                        var barisBadge = $('<span class="badge bg-secondary line-badge" style="margin-left:4px;">Baris: ' + hl.line + '</span>');
+                        var tr = $('<tr></tr>');
+                        tr.append($('<td></td>').text(idx+1));
+                        tr.append($('<td></td>').html(fungsi));
+                        tr.append($('<td></td>').text(formIdDisplay));
+                        // Aksi: align left, valign middle, tombol + badge baris
+                        var aksiTd = $('<td style="text-align:left; vertical-align:middle;"></td>');
+                        var aksiFlex = $('<div class="d-flex align-items-center"></div>'); // Added d-flex
+                        aksiFlex.append(gotoBtn);
+                        aksiFlex.append(barisBadge);
+                        aksiTd.append(aksiFlex);
+                        tr.append(aksiTd); // Added this line to append the action cell
+                        table.append(tr);
+                    });
+                    table.find('th,td').css({'padding':'4px 0 8px 0','text-align':'center','vertical-align':'middle'});
+                    table.addClass('mb-0');
+                    table.css({'min-width':'420px','border-radius':'8px','overflow':'hidden','box-shadow':'0 2px 8px rgba(0,0,0,0.10)','margin-top':'0'});
+                    table.find('tbody tr').css({'transition':'background 0.2s'});
+                    table.find('tbody tr:hover').css({'background':'#f5f5f5'});
+                    table.find('button').css({'font-size':'0.95rem'}).addClass('py-1 px-2').css({'min-width':'90px','white-space':'nowrap','text-align':'center','display':'inline-block','vertical-align':'middle','margin-left':'0'});
+                    collapseBody.append(table);
+                    infoSectionCardBody.append(collapseBody); // 4. Use renamed variable
+                    cardDiv.append(infoSectionCardBody); // 4. Use renamed variable
+                    groupCard.append(cardDiv); // Append 'Informasi Tambahan' section to groupCard first
+                    // Inisialisasi collapse (Bootstrap 5) untuk elemen dinamis
+                    setTimeout(function(){
+                        var el = document.getElementById(collapseId);
+                        if (el) new bootstrap.Collapse(el, {toggle: false});
+                    }, 10);
+                }
+                
+                groupCard.append(mainCardBody); // Append main results after 'Informasi Tambahan'
+                
+                // Tambahkan card ke container
+                container.append(groupCard);
+                
+                // Increment file index
+                fileIndex++;
+            });
+            
+            // Handler untuk toggle
+            $('.toggle-results').click(function() {
+                var resultContent = $(this).closest('.card').find('.results-content');
+                var icon = $(this).find('i');
+                
+                resultContent.slideToggle(300, function() {
+                    if ($(this).is(':visible')) {
+                        icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+                    } else {
+                        icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+                    }
+                });
+            });
+        }
+        
+        // Memperbaiki bagian createResultItem untuk menampilkan informasi tabel baru
+        function createResultItem(result, itemIndex, groupColor) {
+            // Buat card untuk setiap hasil
+            var resultItem = $('<div class="result-item card mb-3"></div>')
+                .data('table', result.table_name)
+                .data('method', result.method_name)
+                .data('query', result.query)
+                .data('file_name', result.file_name)
+                .data('line_number', result.line_number)
+                .data('remote_server', result.remote_server)
+                .data('needs_replace', result.needs_replace) // boolean
+                .data('replaced', result.replaced || false) // boolean
+                .data('keyword', result.keyword || '')
+                .data('result_id', result.file_name + '_' + result.line_number)
+                .data('new_table_name', result.new_table_name || '')
+                .data('query_type', result.query_type || 'other'); // Tambahkan data jenis query
+            
+            // Tambahkan class berdasarkan status replace
+            if (result.replaced) {
+                if (!result.needs_replace) { // Condition 2: Auto-replaced (or already replaced and didn't need action this session)
+                    resultItem.addClass('replaced-item-auto');
+                } else { // Condition 1: Was 'needs_replace' and then got replaced (manual), or loaded as needs_replace=true and replaced=true
+                    resultItem.addClass('replaced-item'); // Standard green styling
+                }
+            }
+            
+            // Header hasil dengan baris
+            var resultHeader = $('<div class="card-header bg-light d-flex justify-content-between align-items-center py-2"></div>');
+            
+            // Bagian kiri header: badge index dan badge baris
+            var headerLeftPart = $('<div class="d-flex align-items-center"></div>');
+            
+            // Badge nomor urut item
+            var itemBadge = $('<span class="badge index-badge"></span>')
+                .html('<small>Pencarian ke-</small>' + itemIndex)
+                .css('background-color', groupColor);
+            headerLeftPart.append(itemBadge);
+            
+            // Badge informasi baris
+            var lineInfoBadge = $('<span class="badge bg-secondary line-badge"></span>').text('Baris: ' + result.line_number);
+            headerLeftPart.append(lineInfoBadge);
+            
+            // Tambahkan badge jenis query jika tersedia
+            if (result.query_type) {
+                // Cek apakah query_type adalah array atau string
+                var queryTypes = Array.isArray(result.query_type) ? result.query_type : [result.query_type];
+                
+                // Tampilkan badge untuk setiap jenis query
+                if (queryTypes.includes('select') && queryTypes.includes('manipulation')) {
+                    // Jika merupakan kombinasi select dan manipulasi, tampilkan badge khusus
+                    var queryTypeBadge = $('<span class="badge bg-purple ms-2"></span>').text('SELECT+MANIPULASI');
+                    headerLeftPart.append(queryTypeBadge);
+                } else if (queryTypes.includes('select')) {
+                    var queryTypeBadge = $('<span class="badge bg-info ms-2"></span>').text('SELECT');
+                    headerLeftPart.append(queryTypeBadge);
+                } else if (queryTypes.includes('manipulation')) {
+                    var queryTypeBadge = $('<span class="badge bg-warning text-dark ms-2"></span>').text('MANIPULASI');
+                    headerLeftPart.append(queryTypeBadge);
+                }
+            }
+            
+            // Tambahkan badge difficulty
+            if (result.difficulty) {
+                var difficultyText = result.difficulty.charAt(0).toUpperCase() + result.difficulty.slice(1);
+                var difficultyBadge = $('<span class="badge ms-2 badge-' + result.difficulty + '"></span>').text(difficultyText);
+                headerLeftPart.append(difficultyBadge);
+            }
+            
+            // Tambahkan badge jika perlu replace atau sudah direplace, tapi tidak keduanya
+            if (result.needs_replace) {
+                // Jika sudah di-replace, hanya tampilkan badge Replaced
+                if (result.replaced) {
+                    var replaceBadge = $('<span class="badge bg-success ms-2 badge-replaced"></span>').text('Sudah Direplace');
+                    headerLeftPart.append(replaceBadge);
+                } else {
+                    // Jika belum di-replace, tampilkan badge Needs Replace
+                    var replaceBadge = $('<span class="badge bg-warning ms-2 badge-needs-replace"></span>').text('Perlu Direplace');
+                    headerLeftPart.append(replaceBadge);
+                }
+            } else if (
+                // Jika query_type mengandung manipulation atau select+manipulation dan belum direplace
+                ((Array.isArray(result.query_type) && (result.query_type.includes('manipulation') || result.query_type.includes('select+manipulation')))
+                || result.query_type === 'manipulation'
+                || result.query_type === 'select+manipulation')
+                && !result.replaced
+            ) {
+                var replaceBadge = $('<span class="badge bg-warning ms-2 badge-needs-replace"></span>').text('Perlu Direplace');
+                headerLeftPart.append(replaceBadge);
+            } else if (result.replaced) {
+                var replaceBadge = $('<span class="badge bg-success ms-2 badge-replaced"></span>').text('Sudah Direplace');
+                headerLeftPart.append(replaceBadge);
+            }
+            
+            // Tambahkan tombol copy untuk file name
+            var fileNameDiv = $('<div class="ms-2 d-flex align-items-center"></div>');
+            fileNameDiv.append($('<span></span>').text(result.file_name));
+            
+            // Tambahkan nama script jika ada
+            if (result.script_name) {
+                fileNameDiv.append($('<span></span>').text('－' + result.script_name));
+            }
+            
+            var copyFilenameBtn = $('<button class="btn btn-sm btn-link copy-filename-btn py-0 px-1" title="Copy filename"></button>')
+                .html('<i class="fas fa-copy"></i>')
+                .data('filename', result.file_name);
+            fileNameDiv.append(copyFilenameBtn);
+            
+            headerLeftPart.append(fileNameDiv);
+            resultHeader.append(headerLeftPart);
+            resultItem.append(resultHeader);
+            
+            // Tambahkan indikator centang jika sudah direplace
+            if (result.replaced) {
+                var checkedIndicator = $('<div class="checked-indicator"><i class="fas fa-check"></i></div>');
+                resultItem.append(checkedIndicator);
+            }
+            
+            // Body hasil
+            var resultBody = $('<div class="card-body py-3"></div>');
+            
+            // Info metadata
+            var metaInfo = $('<div class="mb-2 small"></div>');
+            
+            // Highlight nama tabel
+            // Cek apakah ada multiple tabel (hasil gabungan)
+            if (result.tables && result.tables.length > 0) {
+                // Jika ada multiple tabel, tampilkan semua tabel dengan highlight terpisah
+                var tableParagraph = $('<p class="mb-1"><strong>Tabel di BE:</strong> </p>');
+                
+                // Tambahkan semua tabel dengan comma sebagai pemisah
+                result.tables.forEach(function(table, index) {
+                    var tableSpan = $('<span class="highlight-table"></span>').text(table);
+                    tableParagraph.append(tableSpan);
+                    
+                    // Tambahkan koma pemisah jika bukan tabel terakhir
+                    if (index < result.tables.length - 1) {
+                        tableParagraph.append(document.createTextNode(", "));
+                    }
+                });
+                
+                metaInfo.append(tableParagraph);
+            } else {
+                // Jika single tabel (cara lama)
+                var tableName = $('<span class="highlight-table"></span>').text(result.table_name);
+                metaInfo.append($('<p class="mb-1"><strong>Tabel di BE:</strong> </p>').append(tableName));
+            }
+            
+            // Tampilkan remote server jika ada dengan warna berdasarkan jenisnya
+            if (result.remote_server && result.remote_server.trim() !== '') {
+                var remoteServerClass = getRemoteServerClass(result.remote_server);
+                var remoteServer = $('<span class="remote-server-color ' + remoteServerClass + '"></span>').text(result.remote_server);
+                metaInfo.append($('<p class="mb-1"><strong>Remote Server:</strong> </p>').append(remoteServer));
+            }
+            
+            // Tampilkan tabel di remote server (baru)
+            if (result.tables && result.tables.length > 0) {
+                // Jika ada multiple tabel, tampilkan semua tabel dengan tabel_name baru masing-masing
+                var newTableParagraph = $('<p class="mb-1"><strong>Tabel di Remote Server:</strong> </p>');
+                
+                // Ambil data tabel_name baru dari file tbl_name.txt
+                if (result.new_table_names && result.new_table_names.length > 0) {
+                    result.new_table_names.forEach(function(newTable, index) {
+                        // Gunakan warna yang sama dengan Remote Server
+                        var remoteServerClass = getRemoteServerClass(result.remote_server);
+                        var newTableSpan = $('<span class="remote-server-color ' + remoteServerClass + '"></span>').text(newTable);
+                        newTableParagraph.append(newTableSpan);
+                        
+                        // Cek apakah tabel BE dan remote server sama
+                        var beTable = result.tables[index] || '';
+                        if (beTable === newTable) {
+                            // Tambahkan tanda centang hijau
+                            newTableParagraph.append($('<span class="icon-circle check-circle"><i class="fas fa-check table-check-mark" title="Sama dengan tabel di BE"></i></span>'));
+                        } else {
+                            // Tambahkan tanda silang merah
+                            newTableParagraph.append($('<span class="icon-circle cross-circle"><i class="fas fa-times table-cross-mark" title="Berbeda dengan tabel di BE"></i></span>'));
+                        }
+                        
+                        // Tambahkan koma pemisah jika bukan tabel terakhir
+                        if (index < result.new_table_names.length - 1) {
+                            newTableParagraph.append(document.createTextNode(", "));
+                        }
+                    });
+                } else {
+                    // Jika belum ada data new_table_name, tampilkan sama dengan table_name
+                    result.tables.forEach(function(table, index) {
+                        // Gunakan warna yang sama dengan Remote Server
+                        var remoteServerClass = getRemoteServerClass(result.remote_server);
+                        var newTableSpan = $('<span class="remote-server-color ' + remoteServerClass + '"></span>').text(table);
+                        newTableParagraph.append(newTableSpan);
+                        
+                        // Tambahkan tanda centang hijau karena sama persis
+                        newTableParagraph.append($('<span class="icon-circle check-circle"><i class="fas fa-check table-check-mark" title="Sama dengan tabel di BE"></i></span>'));
+                        
+                        // Tambahkan koma pemisah jika bukan tabel terakhir
+                        if (index < result.tables.length - 1) {
+                            newTableParagraph.append(document.createTextNode(", "));
+                        }
+                    });
+                }
+                
+                metaInfo.append(newTableParagraph);
+            } else {
+                // Jika single tabel
+                var newTableName = result.new_table_name || result.table_name;
+                // Gunakan warna yang sama dengan Remote Server
+                var remoteServerClass = getRemoteServerClass(result.remote_server);
+                var newTableSpan = $('<span class="remote-server-color ' + remoteServerClass + '"></span>').text(newTableName);
+                var newTableParagraph = $('<p class="mb-1"><strong>Tabel di Remote Server:</strong> </p>').append(newTableSpan);
+                
+                // Cek apakah tabel BE dan remote server sama
+                if (result.table_name === newTableName) {
+                    // Tambahkan tanda centang hijau
+                    newTableParagraph.append($('<span class="icon-circle check-circle"><i class="fas fa-check table-check-mark" title="Sama dengan tabel di BE"></i></span>'));
+                } else {
+                    // Tambahkan tanda silang merah
+                    newTableParagraph.append($('<span class="icon-circle cross-circle"><i class="fas fa-times table-cross-mark" title="Berbeda dengan tabel di BE"></i></span>'));
+                }
+                
+                metaInfo.append(newTableParagraph);
+            }
+            
+            // Tampilkan keyword jika ada dengan highlight
+            if (result.keyword && result.keyword.trim() !== '') {
+                var keywordHighlight = $('<span class="highlight-keyword"></span>').text(result.keyword);
+                metaInfo.append($('<p class="mb-1"><strong>Kata Kunci:</strong> </p>').append(keywordHighlight));
+            }
+            
+            resultBody.append(metaInfo);
+            
+            // Query text dengan highlight untuk tabel dan keyword
+            var queryText = result.query;
+            
+            // Buat highlight untuk query
+            // Cek apakah ada multiple tabel untuk di-highlight
+            if (result.tables && result.tables.length > 0) {
+                // Lakukan highlighting untuk setiap tabel dalam daftar
+                result.tables.forEach(function(tableName) {
+                    // Escape karakter regex khusus dalam nama tabel
+                    var tableRegex = new RegExp('(^|[\\s\'"`,;\\(\\)])('+escapeRegExp(tableName)+')($|[\\s\'"`,;\\(\\)])', 'gi');
+                    queryText = queryText.replace(tableRegex, function(match, p1, p2, p3) {
+                        // p1 adalah pembatas awal, p2 adalah nama tabel, p3 adalah pembatas akhir
+                        return p1 + '<span class="highlight-table">' + p2 + '</span>' + p3;
+                    });
+                });
+            } else if (result.table_name) {
+                // Single tabel (cara lama)
+                // Escape karakter regex khusus dalam nama tabel
+                var tableRegex = new RegExp('(^|[\\s\'"`,;\\(\\)])('+escapeRegExp(result.table_name)+')($|[\\s\'"`,;\\(\\)])', 'gi');
+                queryText = queryText.replace(tableRegex, function(match, p1, p2, p3) {
+                    // p1 adalah pembatas awal, p2 adalah nama tabel, p3 adalah pembatas akhir
+                    return p1 + '<span class="highlight-table">' + p2 + '</span>' + p3;
+                });
+            }
+            
+            if (result.keyword && result.keyword.trim() !== '') {
+                // Escape karakter regex khusus dalam keyword
+                // Kecuali untuk keyword '-', yang merupakan wildcard
+                if (result.keyword === '-') {
+                    // Untuk wildcard, tetap gunakan logika highlight yang lama
+                    var keywordRegex = new RegExp(escapeRegExp(result.keyword), 'gi');
+                    queryText = queryText.replace(keywordRegex, function(match) {
+                        return '<span class="highlight-keyword">' + match + '</span>';
+                    });
+                } else {
+                    // Perbaikan untuk highlight keyword
+                    // 1. Coba jika keyword adalah bagian dari kata (jt, jdbc, dll)
+                    var keywordLower = result.keyword.toLowerCase();
+                    
+                    // Handle kasus untuk keyword umum seperti jt, jdbctemplate, dll
+                    if (keywordLower === 'jt' || keywordLower === 'jdbc' || keywordLower.includes('jdbctemplate')) {
+                        // Untuk keyword pendek dan spesifik seperti jt, cari dengan lebih fleksibel
+                        // tapi dengan batasan jelas seperti sebelum tanda titik atau di awal kata
+                        if (keywordLower === 'jt') {
+                            var jtRegex = new RegExp('(\\bjt\\.|\\bJt\\.|\\bjT\\.|\\bJT\\.)', 'g');
+                            queryText = queryText.replace(jtRegex, function(match) {
+                                return '<span class="highlight-keyword">' + match + '</span>';
+                            });
+                        } else if (keywordLower.includes('jdbctemplate')) {
+                            // Untuk jdbctemplate, cari dengan case insensitive
+                            var jdbcRegex = new RegExp('(getJdbcTemplate\\(\\)|jdbcTemplate|JdbcTemplate)', 'gi');
+                            queryText = queryText.replace(jdbcRegex, function(match) {
+                                return '<span class="highlight-keyword">' + match + '</span>';
+                            });
+                        } else if (keywordLower === 'jdbc') {
+                            // Untuk jdbc, cari dengan case insensitive
+                            var jdbcRegex = new RegExp('jdbc', 'gi');
+                            queryText = queryText.replace(jdbcRegex, function(match) {
+                                return '<span class="highlight-keyword">' + match + '</span>';
+                            });
+                        }
+                    } else {
+                        // Untuk keyword lain, gunakan pendekatan yang lebih fleksibel
+                        // Mencari keyword dalam teks dengan memperhatikan batas kata
+                        var keywordRegex = new RegExp('(' + escapeRegExp(result.keyword) + ')', 'gi');
+                        queryText = queryText.replace(keywordRegex, function(match) {
+                            return '<span class="highlight-keyword">' + match + '</span>';
+                        });
+                    }
+                }
+            }
+            
+            // Tambahkan query dengan highlight
+            resultBody.append($('<h6>Script:</h6>'));
+            var preElement = $('<pre class="query-text"></pre>');
+            preElement.html(queryText);  // Gunakan html() agar tag span di-render
+
+            // Tambahkan tombol copy
+            var copyButton = $('<button class="copy-btn" title="Salin ke clipboard"><i class="fas fa-copy"></i></button>');
+            preElement.append(copyButton);
+
+            resultBody.append(preElement);
+            
+            // Tombol Replace dan Pergi ke code
+            var queryTypes = Array.isArray(result.query_type) ? result.query_type : [result.query_type];
+            var isManipulation = queryTypes.includes('manipulation');
+
+            // Tombol "Pergi ke code" selalu ditampilkan
+            var gotoCodeBtn = $('<button class="btn btn-info mt-2 me-2 goto-code-btn"></button>')
+                .html('<i class="fas fa-location-arrow me-1"></i>Pergi ke code')
+                .data('file_name', result.file_name)
+                .data('line_number', result.line_number);
+            resultBody.append(gotoCodeBtn);
+            
+            // Tampilkan tombol replace jika perlu direplace atau jika manipulasi dan belum direplace
+            if (result.needs_replace || (isManipulation && !result.replaced)) {
+                var replaceBtn = $('<button class="btn btn-warning mt-2 replace-btn"></button>')
+                    .html('<i class="fas fa-sync-alt me-1"></i>Replace')
+                    .data('file_name', result.file_name)
+                    .data('line_number', result.line_number)
+                    .data('result_id', result.file_name + '_' + result.line_number)
+                    .data('keyword', result.keyword || '');
+                resultBody.append(replaceBtn);
+                // Jika sudah di-replace, tambahkan status sukses
+                if (result.replaced) {
+                    var replaceStatus = $('<div class="alert alert-success mt-2 py-2"></div>')
+                        .html('<i class="fas fa-check-circle me-1"></i>Berhasil direplace');
+                    resultBody.append(replaceStatus);
+                }
+            }
+            
+            // Tambahkan body ke result item
+            resultItem.append(resultBody);
+            
+            return resultItem;
+        }
+        
+        // Fungsi untuk mendapatkan kelas CSS berdasarkan remote server
+        function getRemoteServerClass(remoteServer) {
+            var server = remoteServer.toLowerCase();
+            
+            if (server.includes('olibscif_ds')) {
+                return 'remote-server-olibscif_ds';
+            } else if (server.includes('olibsfe_ds')) {
+                return 'remote-server-olibsfe_ds';
+            } else if (server.includes('olibsext_ds')) {
+                return 'remote-server-olibsext_ds';
+            } else if (server.includes('olibshtx_ds')) {
+                return 'remote-server-olibshtx_ds';
+            } else if (server.includes('olibssbx_ds')) {
+                return 'remote-server-olibssbx_ds';
+            } else if (server.includes('olibssec_ds')) {
+                return 'remote-server-olibssec_ds';
+            } else {
+                // Default jika tidak cocok dengan yang di atas
+                return 'remote-server-default';
+            }
+        }
+        
+        // Helper function untuk escape karakter khusus regex
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+        
+        // Helper function untuk mengacak array (algoritma Fisher-Yates)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Tambahkan modal konfirmasi
+        function showConfirmationModal(title, message, onConfirm) {
+            // Periksa apakah modalnya sudah ada di DOM
+            if ($('#confirmationModal').length === 0) {
+                // Jika belum ada, tambahkan ke DOM
+                var modalHTML = `
+                <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="confirmationModalLabel"></h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p id="confirmationMessage"></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                <button type="button" class="btn btn-primary" id="confirmYesBtn">Ya, Lanjutkan</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+                $('body').append(modalHTML);
+            }
+            
+            // Set judul dan pesan
+            $('#confirmationModalLabel').text(title);
+            $('#confirmationMessage').html(message);
+            
+            // Hapus event handler lama dan tambahkan yang baru
+            $('#confirmYesBtn').off('click').on('click', function() {
+                $('#confirmationModal').modal('hide');
+                if (typeof onConfirm === 'function') {
+                    onConfirm();
+                }
+            });
+            
+            // Tampilkan modal
+            var confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+            confirmationModal.show();
+        }
+
+        $('.result-item').on('click', '.replace-btn', function(e) {
+            e.preventDefault();
+            var btn = $(this);
+            var item = btn.closest('.result-item');
+            var fileId = btn.data('result_id');
+            var fileName = btn.data('file_name');
+            var lineNumber = btn.data('line_number');
+            var remoteServer = resultItem.data('remote_server');
+            var keyword = resultItem.data('keyword').toLowerCase();
+            var query = resultItem.data('query');
+            var overwriteSource = $('#overwrite-source').is(':checked');
+            
+            // Nonaktifkan tombol sementara
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Mengganti...');
+            
+            // Jika ada info new_table_name, gunakan itu
+            if (item.data('new_table_name')) {
+                newTableNames = [item.data('new_table_name')];
+            } else {
+                // Gunakan nama tabel yang sama jika tidak ada informasi tabel baru
+                newTableNames = tableNames;
+            }
+            
+            // Kirim permintaan replace
+            $.ajax({
+                url: '/replace_file',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    file_name: fileName,
+                    line_number: lineNumber,
+                    remote_server: remoteServer,
+                    keyword: keyword,
+                    query: query,
+                    table_names: tableNames,
+                    new_table_names: newTableNames,
+                    overwrite_source: overwriteSource
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        // Update UI untuk menunjukkan item berhasil direplace
+                        item.addClass('replaced-item');
+                        item.data('replaced', true);
+                        
+                        // Ubah badge dan tampilan
+                        var headerBadges = item.find('.card-header .d-flex.align-items-center');
+                        headerBadges.find('.badge.bg-warning').removeClass('bg-warning').addClass('bg-success badge-replaced').text('Sudah Direplace');
+                        
+                        // Tambahkan indikator centang
+                        if (item.find('.checked-indicator').length === 0) {
+                            var checkedIndicator = $('<div class="checked-indicator"><i class="fas fa-check"></i></div>');
+                            item.append(checkedIndicator);
+                        }
+                        
+                        // Update tombol dan tambahkan indikator sukses
+                        btn.removeClass('btn-warning').addClass('btn-success')
+                           .html('<i class="fas fa-check me-1"></i>Berhasil')
+                           .prop('disabled', true);
+                        
+                        // Update status tombol Replace Script dan Replace All
+                        updateReplaceScriptButtons();
+                        updateReplaceAllButton();
+                    } else {
+                        // Tampilkan pesan error
+                        btn.removeClass('btn-warning').addClass('btn-danger')
+                           .html('<i class="fas fa-times me-1"></i>Gagal')
+                           .prop('disabled', false);
+                        
+                        showStatusMessage('error', 'Gagal mengganti: ' + response.message);
+                    }
+                },
+                error: function() {
+                    // Tampilkan pesan error
+                    btn.removeClass('btn-warning').addClass('btn-danger')
+                       .html('<i class="fas fa-times me-1"></i>Error')
+                       .prop('disabled', false);
+                    
+                    showStatusMessage('error', 'Terjadi kesalahan saat mengganti file');
+                }
+            });
+        });
+
+        // Handler tombol Pergi ke code
+        $(document).on('click', '.goto-code-btn', function() {
+            var btn = $(this);
+            var fileName = btn.data('file_name');
+            var lineNumber = btn.data('line_number');
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menuju...');
+            $.ajax({
+                url: '/goto_code',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    file_name: fileName,
+                    line_number: lineNumber
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        btn.removeClass('btn-info').addClass('btn-success')
+                           .html('<i class="fas fa-check me-1"></i>Berhasil dibuka!');
+                    } else {
+                        btn.removeClass('btn-info').addClass('btn-danger')
+                           .html('<i class="fas fa-times me-1"></i>Gagal');
+                        alert(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    btn.removeClass('btn-info').addClass('btn-danger')
+                       .html('<i class="fas fa-times me-1"></i>Error');
+                    alert('Terjadi error saat membuka file di Intellij!');
+                },
+                complete: function() {
+                    setTimeout(function() {
+                        btn.prop('disabled', false).removeClass('btn-success btn-danger').addClass('btn-info').html('<i class="fas fa-location-arrow me-1"></i>Pergi ke code');
+                    }, 2000);
+                }
+            });
+        });
+
+        // Handler untuk atur path Intellij
+        $('#set-intellij-path').on('click', function() {
+            var path = $('#intellij-path').val();
+            var btn = $(this);
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
+            $.ajax({
+                url: '/set_intellij_path',
+                type: 'POST',
+                data: { intellij_path: path },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        btn.removeClass('btn-primary').addClass('btn-success').html('<i class="fas fa-check me-1"></i>Berhasil!');
+                    } else {
+                        btn.removeClass('btn-primary').addClass('btn-danger').html('<i class="fas fa-times me-1"></i>Gagal');
+                        alert(response.message);
+                    }
+                },
+                error: function(xhr) {
+                    btn.removeClass('btn-primary').addClass('btn-danger').html('<i class="fas fa-times me-1"></i>Error');
+                    alert('Terjadi error saat menyimpan path Intellij!');
+                },
+                complete: function() {
+                    setTimeout(function() {
+                        btn.prop('disabled', false).removeClass('btn-success btn-danger').addClass('btn-primary').html('<i class="fas fa-folder-open me-1"></i> Atur Path');
+                    }, 2000);
+                }
+            });
+        });
+
+        let originalProxyTableOptions = [];
+
+        function storeOriginalProxyTables() {
+            originalProxyTableOptions = []; // Clear previous
+            $('#filter-table option').each(function() {
+                originalProxyTableOptions.push({ value: $(this).val(), text: $(this).text() });
+            });
+        }
+
+        function loadProxyTables() {
+            const $filterTable = $('#filter-table');
+            $filterTable.empty();
+            originalProxyTableOptions.forEach(opt => {
+                $filterTable.append($('<option>', { value: opt.value, text: opt.text }));
+            });
+            // Show replace buttons
+            $('#replace-all-btn').show();
+            $('.btn-replace-individual').show(); // Assuming this class for individual replace buttons
+        }
+
+        function loadBeTables() {
+            const $filterTable = $('#filter-table');
+            $filterTable.empty();
+            $filterTable.append($('<option>', { value: "ALL", text: "ALL" })); // Add ALL option
+
+            $.ajax({
+                url: '/get_be_tables',
+                type: 'GET',
+                success: function(data) {
+                    if (data.tables) {
+                        data.tables.forEach(function(table) {
+                            $filterTable.append($('<option>', { value: table, text: table }));
+                        });
+                    }
+                },
+                error: function() {
+                    console.error('Error loading BE tables.');
+                    showStatusMessage('error', 'Gagal memuat daftar Tabel BE.');
+                     // Optionally, switch back to proxy or show an error state
+                }
+            });
+            // Hide replace buttons
+            $('#replace-all-btn').hide();
+            $('.btn-replace-individual').hide(); // Assuming this class for individual replace buttons
+        }
+
+        // Store original tables on document ready, assuming they are populated by then
+        $(document).ready(function() {
+            storeOriginalProxyTables();
+
+            $('input[name="tableMode"]').change(function() {
+                if (this.value === 'proxy') {
+                    loadProxyTables();
+                } else if (this.value === 'be') {
+                    loadBeTables();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

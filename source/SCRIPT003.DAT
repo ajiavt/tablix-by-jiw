@@ -1,0 +1,56 @@
+
+	public void showReport(){
+		this.isPreview = true;
+		String noRek=(String)wndEngine.getFellowValue("txtRekening");
+		JdbcTemplate jt=getJdbcTemplate();
+		String format  = (String) wndEngine.getFellowValue("format");
+
+		try {
+			HashMap param = new HashMap();
+			param.put("cabang", dataSession.userMap.getString("BRANCHID")+" - "+dataSession.branchMap.get("BRANCHNM"));
+			param.put("namaBank",dataSession.branchMap.get("BANKNM"));
+			param.put("printedBy", dataSession.userMap.get("USERID"));
+			param.put("logo", Sessions.getCurrent().getWebApp().getRealPath("/img/logo_bank.jpg"));
+			param.put("judul","Rincian Tagihan");
+			//param.put("REPORT_CONNECTION", getJdbcTemplate().getDataSource().getConnection());
+			BigDecimal bakiDebet = (BigDecimal) jt.queryObject("SELECT COALESCE(AMTBAL,0.00) FROM MST_LOANFINANCE WHERE ACCNBR=?", new Object[]{noRek}, BigDecimal.class);
+			param.put("bakiDebet",bakiDebet);
+			List datas=jt.query(
+					"SELECT A.ACCNBR, "
+						 + "B.PRINTNM, "
+						 + "D.ADDR, "
+						 + "B.DUEDT, "
+						 + "A.MNTHDT													AS TGL_TAG, "
+						 + "C.BULANKE													AS TAG_KE, "
+						 + "COALESCE(A.AMTPRCBILL,0.00) - COALESCE(A.AMTPRCPAY,0.00)	AS TAG_PKK, "
+						 + "COALESCE(A.AMTINTBILL,0.00) - COALESCE(A.AMTINTPAY,0.00)	AS TAG_BNG, "
+						 + "COALESCE(A.AMTPENBILL,0.00) - COALESCE(A.AMTPENPAY,0.00)	AS TAG_DND "
+						 + "FROM REF_BILLPAYMENT A LEFT OUTER JOIN MST_SCHEDLOANPAY C "
+						 + "				ON C.ACCNBR = A.ACCNBR "
+						 + "				AND C.TANGGAL = A.MNTHDT, "
+						 + "	 V_NOMI_KRD B LEFT OUTER JOIN V_MST_CIFTEMP D "
+						 + "				ON D.CIFID = B.CIFID "
+						 + "WHERE B.ACCNBR = A.ACCNBR "
+						 + "AND ( "
+						 + "	COALESCE(A.AMTPRCBILL,0.00) - COALESCE(A.AMTPRCPAY,0.00) > 0.00 OR "
+						 + "	COALESCE(A.AMTINTBILL,0.00) - COALESCE(A.AMTINTPAY,0.00) > 0.00 OR "
+						 + "	COALESCE(A.AMTPENBILL,0.00) - COALESCE(A.AMTPENPAY,0.00) > 0.00 "
+						 + "	) "
+						 + "AND A.MNTHDT < (SELECT SYS.OPENDATE FROM CFG_SYS SYS) "
+						 + "AND A.ACCNBR = ? ORDER BY A.MNTHDT"
+					,new Object[]{noRek}, new DTOMap());
+			//Jasperreport jReport=(Jasperreport)wndEngine.getFellow("report");
+			if (datas.size()>0) {
+				setJasperReport(param,"/jasper/konven/kredit/XXX.jasper");
+		        setDataSource(new JRBeanCollectionDataSource(datas));
+		        super.showReport();
+				/*jReport.setDatasource(new JRBeanCollectionDataSource(datas));
+				jReport.setParameters(param);
+				jReport.setSrc("/jasper/konven/kredit/XXX.jasper");
+				jReport.setType(format);*/
+			}else{
+				MessageBox.showInformation("Tidak ada data yang di tampilkan.");		
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}

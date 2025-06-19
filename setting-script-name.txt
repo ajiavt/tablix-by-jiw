@@ -1,0 +1,5 @@
+SCRIPTUM010300.DAT	Pemeliharaan Pesan Cabang
+SCRIPTUM021400.DAT	Popup Inquery Data AFT
+SCRIPTUM018300.DAT	Laporan Data Mutasi Rekening BPK
+SCRIPTUM018100.DAT	Entry Data Rekening BPK
+SCRIPTUM018500.DAT	Laporan Deposito BPK
